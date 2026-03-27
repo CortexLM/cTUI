@@ -1,0 +1,10 @@
+---
+source: ctui-components/src/block.rs
+assertion_line: 500
+expression: result
+---
+┌─────────
+│         
+│         
+│         
+│

@@ -1,0 +1,6 @@
+---
+source: ctui-components/src/paragraph.rs
+assertion_line: 381
+expression: result
+---
+Left

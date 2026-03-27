@@ -1,0 +1,23 @@
+[package]
+name = "ctui-tests"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Integration tests for cTUI framework"
+publish = false
+
+[dependencies]
+ctui-core = { path = "../ctui-core" }
+ctui-layout = { path = "../ctui-layout" }
+ctui-components = { path = "../ctui-components" }
+ctui-animate = { path = "../ctui-animate" }
+ctui-theme = { path = "../ctui-theme" }
+
+[dev-dependencies]
+insta = { workspace = true }
+rstest = { workspace = true }
+approx = "0.5"
+
+[lints]
+workspace = true

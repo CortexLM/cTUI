@@ -1,0 +1,10 @@
+---
+source: ctui-components/src/table.rs
+assertion_line: 613
+expression: result
+---
+Item      
+──────────
+ First    
+Second    
+Third

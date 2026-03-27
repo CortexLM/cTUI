@@ -1,0 +1,9 @@
+---
+source: ctui-components/src/list.rs
+assertion_line: 426
+expression: result
+---
+First          
+Second         
+Third          
+Fourth

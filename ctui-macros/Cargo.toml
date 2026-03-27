@@ -1,0 +1,22 @@
+[package]
+name = "ctui-macros"
+description = "Procedural macros for cTUI framework"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = { workspace = true }
+quote = { workspace = true }
+proc-macro2 = { workspace = true }
+
+[dev-dependencies]
+ctui-core = { path = "../ctui-core" }
+trybuild = "1"
+
+[lints]
+workspace = true

@@ -1,0 +1,9 @@
+---
+source: ctui-components/src/sparkline.rs
+expression: result
+---
+         ███   
+   ███   ███   
+   █████████   
+   ████████████
+███████████████

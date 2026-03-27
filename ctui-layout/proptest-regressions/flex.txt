@@ -1,0 +1,12 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 18fa49365299af05c6f00eb9d28a94e0f567caf0c91a7a7bcd21b110cd859129 # shrinks to height = 1, n_children = 1
+cc 04b46991013694eb952135e52496e2856938caa7bc5f5301114b6d4bcc8bd259 # shrinks to width = 1, n_children = 1
+cc 3dcd2d35196a8d6488c5fa8f565ef72d86438e34a9474c0550161db6f6427b12 # shrinks to x = 0, y = 0, width = 10, height = 10
+cc 6a82c61e401f338ccf722776f1b9c00e8e6478b29fe11e1542f35fc16caf7eef # shrinks to width = 8, height = 1, child_count = 4, zero_index = 3
+cc aa3a01cc0bd49aa9dd967ad82d39f2d647a051a5c40c515d08883c8bf2573ccf # shrinks to x = 0, y = 0, width = 1, height = 1, child_count = 3, gap = 2, constraints = [Length(0), Length(0), Length(0)]
+cc 7b9df14b07a3259292ed8628f613dc06bca766e7f24563df8cd582e823390eb8 # shrinks to x = 0, y = 0, width = 1, height = 1, child_count = 3, gap = 2, constraints = [Length(0), Length(0), Length(0)]

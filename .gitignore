@@ -1,0 +1,19 @@
+# Build artifacts
+/target/
+Cargo.lock
+
+# Backup files
+**/*.rs.bk
+*.snap.new
+
+# IDE/Editor
+.idea/
+.vscode/
+*.iml
+
+# Debug files
+*.pdb
+
+# OS
+.DS_Store
+.sisyphus/

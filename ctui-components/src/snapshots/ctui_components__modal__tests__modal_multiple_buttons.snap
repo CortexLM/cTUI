@@ -1,0 +1,22 @@
+---
+source: ctui-components/src/modal.rs
+expression: result
+---
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+                                                            
+               ┌ Delete Item ───────────────┐               
+               │                            │               
+               │This action cannot be undone│               
+               │                            │               
+               │                            │               
+               │                            │               
+               │                            │               
+               │                            │               
+               │                            │               
+               │                            │               
+               │   [ Cancel ]  [ Delete ]   │               
+               └────────────────────────────┘

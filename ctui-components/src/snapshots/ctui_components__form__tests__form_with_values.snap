@@ -1,0 +1,7 @@
+---
+source: ctui-components/src/form.rs
+expression: result
+---
+Name:      [John Doe              ]
+                                   
+Email:     [john@example.com      ]

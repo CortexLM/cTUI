@@ -1,0 +1,8 @@
+---
+source: ctui-components/src/form.rs
+expression: result
+---
+Email:     [                           ]
+Invalid email format                    
+                                        
+Age:       [                           ]

@@ -1,0 +1,7 @@
+---
+source: ctui-components/src/table.rs
+assertion_line: 575
+expression: result
+---
+ID   Name      Age  
+────────────────────

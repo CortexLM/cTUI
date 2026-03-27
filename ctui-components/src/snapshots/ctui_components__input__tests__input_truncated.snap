@@ -1,0 +1,6 @@
+---
+source: ctui-components/src/input.rs
+assertion_line: 681
+expression: result
+---
+This is a very

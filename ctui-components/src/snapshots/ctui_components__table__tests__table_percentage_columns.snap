@@ -1,0 +1,8 @@
+---
+source: ctui-components/src/table.rs
+assertion_line: 676
+expression: result
+---
+A     B       C     
+────────────────────
+Left  Middle  Right

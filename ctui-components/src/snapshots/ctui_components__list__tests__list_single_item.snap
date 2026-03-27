@@ -1,0 +1,6 @@
+---
+source: ctui-components/src/list.rs
+assertion_line: 413
+expression: result
+---
+Single Item

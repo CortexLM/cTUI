@@ -1,0 +1,22 @@
+[package]
+name = "ctui-animate"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+description = "Animation and easing functions for cTUI framework"
+
+[dependencies]
+ctui-core = { path = "../ctui-core" }
+
+[dev-dependencies]
+approx = "0.5"
+criterion = "0.5"
+
+[lints]
+workspace = true
+
+[[bench]]
+name = "interpolate"
+harness = false

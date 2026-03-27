@@ -1,0 +1,6 @@
+---
+source: ctui-components/src/paragraph.rs
+assertion_line: 388
+expression: result
+---
+    Center

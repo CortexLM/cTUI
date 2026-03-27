@@ -1,0 +1,9 @@
+---
+source: ctui-components/src/gauge.rs
+expression: result
+---
+               
+  ░░█████████  
+ ░░░░█ █ █████ 
+ ░░░░  █  ████ 
+ ░░░░100%█████

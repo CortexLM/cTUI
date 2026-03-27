@@ -1,0 +1,9 @@
+---
+source: ctui-components/src/table.rs
+assertion_line: 665
+expression: result
+---
+ID   Description         
+─────────────────────────
+1    A long description  
+2    Short

@@ -1,0 +1,14 @@
+---
+source: ctui-components/src/modal.rs
+expression: result
+---
+                                        
+                                        
+                                        
+                                        
+                                        
+          ┌──────────────────┐          
+          │                  │          
+          │                  │          
+          │    [ Close ]     │          
+          └──────────────────┘

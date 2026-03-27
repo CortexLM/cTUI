@@ -1,0 +1,97 @@
+[workspace]
+resolver = "2"
+members = [
+    "ctui-core",
+    "ctui-macros",
+    "ctui-layout",
+    "ctui-components",
+    "ctui-animate",
+    "ctui-theme",
+    "ctui-cli",
+    "ctui-tests",
+]
+default-members = ["ctui-core"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/CortexLM/cTUI"
+
+[workspace.dependencies]
+tokio = { version = "1", features = ["full"] }
+crossterm = "0.28"
+miette = "7"
+ratatui = "0.29"
+criterion = "0.5"
+insta = "1.42"
+rstest = "0.25"
+proptest = "1.6"
+unicode-width = "0.2"
+bitflags = "2.8"
+syn = { version = "2", features = ["full", "parsing", "extra-traits"] }
+quote = "1"
+proc-macro2 = "1"
+
+[workspace.lints.rust]
+unsafe_code = "deny"
+missing_docs = "warn"
+
+[workspace.lints.clippy]
+all = "warn"
+pedantic = "warn"
+nursery = "warn"
+
+[profile.release]
+lto = true
+opt-level = 3
+
+# Benchmark package for baseline measurements
+[package]
+name = "ctui-benches"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+ctui-core = { path = "ctui-core" }
+ctui-components = { path = "ctui-components" }
+ctui-animate = { path = "ctui-animate" }
+ctui-layout = { path = "ctui-layout" }
+
+[dev-dependencies]
+ratatui = { workspace = true }
+criterion = { workspace = true }
+crossterm = { workspace = true }
+
+[[bench]]
+name = "ratatui_baseline"
+harness = false
+
+[[bench]]
+name = "buffer_diff"
+harness = false
+
+[[example]]
+name = "counter"
+path = "examples/counter.rs"
+
+[[example]]
+name = "todo"
+path = "examples/todo.rs"
+
+[[example]]
+name = "dashboard"
+path = "examples/dashboard.rs"
+
+[[example]]
+name = "file_explorer"
+path = "examples/file_explorer.rs"
+
+[[example]]
+name = "animation"
+path = "examples/animation.rs"
+
+[[example]]
+name = "render_gallery"
+path = "scripts/render_gallery.rs"

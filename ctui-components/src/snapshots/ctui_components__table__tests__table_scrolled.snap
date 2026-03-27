@@ -1,0 +1,9 @@
+---
+source: ctui-components/src/table.rs
+assertion_line: 654
+expression: result
+---
+Num  Value     
+───────────────
+3    Three     
+4    Four

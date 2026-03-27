@@ -1,0 +1,17 @@
+---
+source: ctui-components/src/modal.rs
+expression: result
+---
+                                                  
+                                                  
+                                                  
+                                                  
+                                                  
+                                                  
+                                                  
+               ┌ Confirmation ────┐               
+               │                  │               
+               │Are you sure you w│               
+               │                  │               
+               │    [ Close ]     │               
+               └──────────────────┘

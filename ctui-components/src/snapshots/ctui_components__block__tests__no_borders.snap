@@ -1,0 +1,6 @@
+---
+source: ctui-components/src/block.rs
+assertion_line: 360
+expression: result
+---
+

@@ -1,0 +1,6 @@
+---
+source: ctui-components/src/input.rs
+assertion_line: 674
+expression: result
+---
+end

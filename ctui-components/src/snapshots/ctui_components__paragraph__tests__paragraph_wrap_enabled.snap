@@ -1,0 +1,9 @@
+---
+source: ctui-components/src/paragraph.rs
+assertion_line: 367
+expression: result
+---
+This is a long 
+line that      
+should wrap to 
+fit the width

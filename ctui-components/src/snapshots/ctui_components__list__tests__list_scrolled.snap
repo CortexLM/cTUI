@@ -1,0 +1,8 @@
+---
+source: ctui-components/src/list.rs
+assertion_line: 479
+expression: result
+---
+Item 5         
+Item 6         
+Item 7

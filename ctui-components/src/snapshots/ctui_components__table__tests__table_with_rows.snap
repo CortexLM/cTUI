@@ -1,0 +1,10 @@
+---
+source: ctui-components/src/table.rs
+assertion_line: 588
+expression: result
+---
+ID   Name      Age  
+────────────────────
+1    Alice     25   
+2    Bob       30   
+3    Charlie   35

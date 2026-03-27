@@ -1,0 +1,5 @@
+---
+source: ctui-components/src/checkbox.rs
+expression: result
+---
+☐ Accept terms

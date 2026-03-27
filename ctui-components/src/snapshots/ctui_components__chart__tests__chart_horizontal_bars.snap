@@ -1,0 +1,7 @@
+---
+source: ctui-components/src/chart.rs
+expression: result
+---
+ItemA                         
+ItemB ██████████              
+ItemC ██████████████

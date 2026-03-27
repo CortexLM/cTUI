@@ -1,0 +1,21 @@
+[package]
+name = "ctui-layout"
+version.workspace = true
+edition.workspace = true
+description = "Flexbox layout engine for cTUI terminal applications"
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+ctui-core = { path = "../ctui-core" }
+
+[dev-dependencies]
+proptest = { workspace = true }
+criterion = { workspace = true }
+
+[lints]
+workspace = true
+
+[[bench]]
+name = "flex_bench"
+harness = false

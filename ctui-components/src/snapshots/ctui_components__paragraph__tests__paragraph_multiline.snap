@@ -1,0 +1,8 @@
+---
+source: ctui-components/src/paragraph.rs
+assertion_line: 360
+expression: result
+---
+Line one       
+Line two       
+Line three

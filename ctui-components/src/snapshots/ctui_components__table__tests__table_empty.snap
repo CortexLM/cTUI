@@ -1,0 +1,6 @@
+---
+source: ctui-components/src/table.rs
+assertion_line: 565
+expression: result
+---
+

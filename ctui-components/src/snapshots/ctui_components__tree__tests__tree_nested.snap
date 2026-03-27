@@ -1,0 +1,9 @@
+---
+source: ctui-components/src/tree.rs
+expression: result
+---
+▼  Root             
+   Child 1          
+   Child 2          
+▼  Child 3          
+   Grandchild

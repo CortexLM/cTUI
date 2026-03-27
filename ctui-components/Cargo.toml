@@ -1,0 +1,19 @@
+[package]
+name = "ctui-components"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+ctui-core = { path = "../ctui-core" }
+ctui-layout = { path = "../ctui-layout" }
+bitflags = { workspace = true }
+unicode-width = "0.1"
+crossterm = { workspace = true }
+
+[dev-dependencies]
+insta = { workspace = true }
+
+[lints]
+workspace = true

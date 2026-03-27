@@ -1,0 +1,23 @@
+[package]
+name = "ctui-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "CLI tool for cTUI framework - scaffold new projects"
+
+[[bin]]
+name = "ctui"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+anyhow = "1"
+thiserror = "1"
+tempfile = "3"
+
+[dev-dependencies]
+tempfile = "3"
+
+[lints]
+workspace = true

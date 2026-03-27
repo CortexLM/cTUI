@@ -1,0 +1,25 @@
+---
+source: ctui-components/src/modal.rs
+expression: result
+---
+                                                            
+                                                            
+                                                            
+       ┌ About ────────────────────────────────────┐        
+       │                                           │        
+       │This is a multi-line                       │        
+       │modal dialog example                       │        
+       │with three lines of text.                  │        
+       │                                           │        
+       │                                           │        
+       │                                           │        
+       │                                           │        
+       │                                           │        
+       │                                           │        
+       │                                           │        
+       │                                           │        
+       │                                           │        
+       │                                           │        
+       │                                           │        
+       │                  [ OK ]                   │        
+       └───────────────────────────────────────────┘

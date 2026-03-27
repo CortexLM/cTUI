@@ -1,0 +1,22 @@
+[package]
+name = "ctui-core"
+version.workspace = true
+edition.workspace = true
+
+[features]
+default = []
+event-stream = ["crossterm/event-stream"]
+
+[dependencies]
+tokio = { workspace = true }
+crossterm = { workspace = true, features = ["event-stream"] }
+unicode-width = { workspace = true }
+bitflags = { workspace = true }
+
+[dev-dependencies]
+insta = { workspace = true }
+rstest = { workspace = true }
+proptest = { workspace = true }
+
+[lints]
+workspace = true

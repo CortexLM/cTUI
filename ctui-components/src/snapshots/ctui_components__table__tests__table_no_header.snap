@@ -1,0 +1,7 @@
+---
+source: ctui-components/src/table.rs
+assertion_line: 600
+expression: result
+---
+X1   Y1   
+X2   Y2

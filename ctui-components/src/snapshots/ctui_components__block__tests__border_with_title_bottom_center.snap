@@ -1,0 +1,9 @@
+---
+source: ctui-components/src/block.rs
+expression: result
+---
+┌─────────────┐
+│             │
+│             │
+│             │
+└── Bottom ───┘

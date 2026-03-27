@@ -1,0 +1,7 @@
+---
+source: ctui-components/src/radio.rs
+expression: result
+---
+◯ Option A     
+◉ Option B     
+◯ Option C

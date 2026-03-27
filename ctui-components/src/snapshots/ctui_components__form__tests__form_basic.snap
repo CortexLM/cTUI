@@ -1,0 +1,10 @@
+---
+source: ctui-components/src/form.rs
+expression: result
+---
+Username:  [                 ]
+                              
+Password:  [                 ]
+                              
+                              
+[ Submit ]  [ Cancel ]

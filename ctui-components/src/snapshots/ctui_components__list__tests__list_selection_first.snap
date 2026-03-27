@@ -1,0 +1,8 @@
+---
+source: ctui-components/src/list.rs
+assertion_line: 440
+expression: result
+---
+Item A         
+Item B         
+Item C

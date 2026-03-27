@@ -1,0 +1,9 @@
+---
+source: ctui-components/src/table.rs
+expression: result
+---
+Name ▲    Value   
+──────────────────
+Alice     10      
+Bob       20      
+Charlie   30
