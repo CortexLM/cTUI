@@ -1,8 +1,8 @@
 //! Cell type for terminal buffer
 
 use crate::style::{Color, Modifier, Style};
+use crate::unicode::{display_width, UnicodeCompat};
 use std::fmt;
-use unicode_width::UnicodeWidthStr;
 
 /// A single cell in the terminal buffer
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -32,8 +32,11 @@ impl Cell {
     }
 
     /// Returns the display width of the cell's symbol
+    /// 
+    /// Uses proper grapheme-aware width calculation via `display_width()`
+    /// which handles variation selectors (VS15/VS16) correctly.
     pub fn width(&self) -> usize {
-        UnicodeWidthStr::width(self.symbol.as_str())
+        display_width(&self.symbol, UnicodeCompat::Unicode14)
     }
 
     /// Sets the symbol
@@ -127,6 +130,20 @@ mod tests {
     fn test_cell_width_emoji() {
         let cell = Cell::new("😀");
         assert_eq!(cell.width(), 2);
+    }
+
+    #[test]
+    fn test_cell_width_vs15_text_presentation() {
+        // VS15 (U+FE0E): Forces text presentation → width 1
+        let cell = Cell::new("\u{1F4CE}\u{FE0E}");
+        assert_eq!(cell.width(), 1, "Paperclip + VS15 should have width 1");
+    }
+
+    #[test]
+    fn test_cell_width_vs16_emoji_presentation() {
+        // VS16 (U+FE0F): Forces emoji presentation → width 2
+        let cell = Cell::new("\u{1F4CE}\u{FE0F}");
+        assert_eq!(cell.width(), 2, "Paperclip + VS16 should have width 2");
     }
 
     #[test]

@@ -3,13 +3,13 @@
 //! Tests for proper Unicode grapheme cluster width handling.
 //!
 //! # Key Finding
-//! The `unicode_width` crate handles most grapheme clusters correctly:
+//! The `display_width` function handles grapheme clusters correctly:
+//! - VS15 variation selector (text): width 1
+//! - VS16 variation selector (emoji): width 2
 //! - ZWJ sequences (family emoji): width 2 ✓
 //! - Flag emoji (regional indicators): width 2 ✓
 //! - Skin tone modified emoji: width 2 ✓
 //! - CJK characters: width 2 ✓
-//!
-//! No immediate changes needed - current implementation is robust.
 
 use ctui_core::cell::Cell;
 
@@ -64,8 +64,6 @@ fn test_width_single_emoji() {
 #[test]
 fn test_width_single_emoji_heart() {
     let cell = Cell::new("❤");
-    // Note: Heart has ambiguous width in unicode_width (may be 1 or 2)
-    // Terminal typically renders at width 2 when treated as emoji
     let width = cell.width();
     assert!(
         width == 1 || width == 2,
@@ -75,130 +73,159 @@ fn test_width_single_emoji_heart() {
 }
 
 // ============================================================================
-// ZWJ Sequences - CORRECTLY HANDLED by unicode_width
-// The unicode_width crate properly handles ZWJ sequences as single graphemes
+// ZWJ Sequences - CORRECTLY HANDLED
 // ============================================================================
 
 #[test]
 fn test_width_zwj_family() {
-    // 👨‍👩‍👧‍👦 family emoji: U+1F468 U+200D U+1F469 U+200D U+1F467 U+200D U+1F466
     let cell = Cell::new("\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F467}\u{200D}\u{1F466}");
     assert_eq!(cell.width(), 2, "ZWJ family emoji should have width 2");
 }
 
 #[test]
 fn test_width_zwj_handshake() {
-    // 🤝 handshake: U+1F9D1 U+200D U+1F91D U+200D U+1F9D1
     let cell = Cell::new("\u{1F9D1}\u{200D}\u{1F91D}\u{200D}\u{1F9D1}");
     assert_eq!(cell.width(), 2, "ZWJ handshake emoji should have width 2");
 }
 
 #[test]
 fn test_width_zwj_kiss() {
-    // 💑 kiss: U+1F469 U+200D U+2764 U+FE0F U+200D U+1F48B U+200D U+1F468
     let cell = Cell::new("\u{1F469}\u{200D}\u{2764}\u{FE0F}\u{200D}\u{1F48B}\u{200D}\u{1F468}");
     assert_eq!(cell.width(), 2, "ZWJ kiss emoji should have width 2");
 }
 
 // ============================================================================
-// Flag Emoji (Regional Indicator Pairs) - CORRECTLY HANDLED by unicode_width
-// Regional indicator pairs (flag emoji) are properly handled as width 2
+// Flag Emoji (Regional Indicator Pairs) - CORRECTLY HANDLED
 // ============================================================================
 
 #[test]
 fn test_width_flag_russia() {
-    // 🇷🇺 Russian flag: U+1F1F7 U+1F1FA
     let cell = Cell::new("\u{1F1F7}\u{1F1FA}");
     assert_eq!(cell.width(), 2, "Russian flag should have width 2");
 }
 
 #[test]
 fn test_width_flag_usa() {
-    // 🇺🇸 USA flag: U+1F1FA U+1F1F8
     let cell = Cell::new("\u{1F1FA}\u{1F1F8}");
     assert_eq!(cell.width(), 2, "USA flag should have width 2");
 }
 
 #[test]
 fn test_width_flag_japan() {
-    // 🇯🇵 Japan flag: U+1F1EF U+1F1F5
     let cell = Cell::new("\u{1F1EF}\u{1F1F5}");
     assert_eq!(cell.width(), 2, "Japan flag should have width 2");
 }
 
 // ============================================================================
-// Variation Selectors VS15/VS16 (CURRENTLY BROKEN - will be fixed in T14)
-// VS15 (U+FE0E): Force text presentation
-// VS16 (U+FE0F): Force emoji presentation
+// VARIATION SELECTOR TESTS (VS15/VS16) - AT LEAST 10 TESTS
+// VS15 (U+FE0E): Force text presentation → width 1
+// VS16 (U+FE0F): Force emoji presentation → width 2
 // ============================================================================
 
+/// Test 1: Paperclip with VS15 (text presentation)
 #[test]
-fn test_width_vs15_text_presentation() {
-    // 📎\u{FE0E} - paperclip with text presentation
-    // Base character: 📎 (U+1F4CE) - typically width 1 as text
-    // VS15: U+FE0E (variation selector, 0 width)
+fn test_vs15_paperclip_text() {
+    // 📎 U+1F4CE + VS15 U+FE0E → text presentation, width 1
     let cell = Cell::new("\u{1F4CE}\u{FE0E}");
-    let actual_width = cell.width();
-
-    // DOCUMENTED BEHAVIOR: Variation selectors not handled
-    // Expected: 1 (text presentation, narrow width)
-    // Actual: 2 or 1 depending on base character
-    // VS15 should be invisible (0 width)
-
-    // Document current behavior
-    assert!(
-        actual_width == 2 || actual_width == 1,
-        "CURRENT: VS15 text variation has width {} (behavior may be correct or broken)",
-        actual_width
-    );
+    assert_eq!(cell.width(), 1, "Paperclip + VS15 should have width 1 (text)");
 }
 
+/// Test 2: Paperclip with VS16 (emoji presentation)
 #[test]
-fn test_width_vs16_emoji_presentation() {
-    // 📎\u{FE0F} - paperclip with emoji presentation
-    // Base character: 📎 (U+1F4CE)
-    // VS16: U+FE0F (variation selector, 0 width but affects presentation)
+fn test_vs16_paperclip_emoji() {
+    // 📎 U+1F4CE + VS16 U+FE0F → emoji presentation, width 2
     let cell = Cell::new("\u{1F4CE}\u{FE0F}");
-    let actual_width = cell.width();
-
-    // DOCUMENTED BEHAVIOR: Variation selectors not handled
-    // Expected: 2 (emoji presentation, wide width)
-    // VS16 should be invisible (0 width, but emoji presentation = 2)
-
-    // Document current behavior
-    assert!(
-        actual_width == 2 || actual_width == 1,
-        "CURRENT: VS16 emoji variation has width {} (behavior may be correct or broken)",
-        actual_width
-    );
+    assert_eq!(cell.width(), 2, "Paperclip + VS16 should have width 2 (emoji)");
 }
 
+/// Test 3: Clipboard with VS15 (text presentation)
 #[test]
-fn test_width_vs16_vs15_comparison() {
-    // Compare base character with and without variation selectors
-    let base = Cell::new("\u{1F4CE}"); // Paperclip
-    let with_emoji = Cell::new("\u{1F4CE}\u{FE0F}"); // + VS16
-    let with_text = Cell::new("\u{1F4CE}\u{FE0E}"); // + VS15
+fn test_vs15_clipboard_text() {
+    // 📋 U+1F4CB + VS15 U+FE0E → text presentation, width 1
+    let cell = Cell::new("\u{1F4CB}\u{FE0E}");
+    assert_eq!(cell.width(), 1, "Clipboard + VS15 should have width 1 (text)");
+}
 
-    // Document: variation selectors currently add to the string but
-    // unicode_width should treat them as 0 width
-    // This test documents whether that's happening correctly
+/// Test 4: Clipboard with VS16 (emoji presentation)
+#[test]
+fn test_vs16_clipboard_emoji() {
+    // 📋 U+1F4CB + VS16 U+FE0F → emoji presentation, width 2
+    let cell = Cell::new("\u{1F4CB}\u{FE0F}");
+    assert_eq!(cell.width(), 2, "Clipboard + VS16 should have width 2 (emoji)");
+}
 
-    // VS15 and VS16 are both 0-width characters in unicode_width
-    // So all three should have same width IF they use same base char
-    // But display may differ in rendering
+/// Test 5: Pushpin with VS15 (text presentation)
+#[test]
+fn test_vs15_pushpin_text() {
+    // 📌 U+1F4CC + VS15 U+FE0E → text presentation, width 1
+    let cell = Cell::new("\u{1F4CC}\u{FE0E}");
+    assert_eq!(cell.width(), 1, "Pushpin + VS15 should have width 1 (text)");
+}
 
-    println!(
-        "Base: {}, +VS16: {}, +VS15: {}",
-        base.width(),
-        with_emoji.width(),
-        with_text.width()
-    );
+/// Test 6: Pushpin with VS16 (emoji presentation)
+#[test]
+fn test_vs16_pushpin_emoji() {
+    // 📌 U+1F4CC + VS16 U+FE0F → emoji presentation, width 2
+    let cell = Cell::new("\u{1F4CC}\u{FE0F}");
+    assert_eq!(cell.width(), 2, "Pushpin + VS16 should have width 2 (emoji)");
+}
+
+/// Test 7: Memo with VS15 (text presentation)
+#[test]
+fn test_vs15_memo_text() {
+    // 📝 U+1F4DD + VS15 U+FE0E → text presentation, width 1
+    let cell = Cell::new("\u{1F4DD}\u{FE0E}");
+    assert_eq!(cell.width(), 1, "Memo + VS15 should have width 1 (text)");
+}
+
+/// Test 8: Memo with VS16 (emoji presentation)
+#[test]
+fn test_vs16_memo_emoji() {
+    // 📝 U+1F4DD + VS16 U+FE0F → emoji presentation, width 2
+    let cell = Cell::new("\u{1F4DD}\u{FE0F}");
+    assert_eq!(cell.width(), 2, "Memo + VS16 should have width 2 (emoji)");
+}
+
+/// Test 9: Globe with VS15 (text presentation)
+#[test]
+fn test_vs15_globe_text() {
+    // 🌐 U+1F310 + VS15 U+FE0E → text presentation, width 1
+    let cell = Cell::new("\u{1F310}\u{FE0E}");
+    assert_eq!(cell.width(), 1, "Globe + VS15 should have width 1 (text)");
+}
+
+/// Test 10: Globe with VS16 (emoji presentation)
+#[test]
+fn test_vs16_globe_emoji() {
+    // 🌐 U+1F310 + VS16 U+FE0F → emoji presentation, width 2
+    let cell = Cell::new("\u{1F310}\u{FE0F}");
+    assert_eq!(cell.width(), 2, "Globe + VS16 should have width 2 (emoji)");
+}
+
+/// Test 11: Compare VS15 vs VS16 widths for same base character
+#[test]
+fn test_vs15_vs16_width_comparison() {
+    let _base = Cell::new("\u{1F4CE}");
+    let with_vs15 = Cell::new("\u{1F4CE}\u{FE0E}");
+    let with_vs16 = Cell::new("\u{1F4CE}\u{FE0F}");
+    
+    // VS15 should make it narrower (text presentation)
+    // VS16 should make it wider (emoji presentation)
+    assert!(with_vs15.width() <= with_vs16.width(),
+        "VS15 ({}) should be <= VS16 ({})", with_vs15.width(), with_vs16.width());
+}
+
+/// Test 12: Multiple variation selectors in sequence (edge case)
+#[test]
+fn test_multiple_vs16() {
+    // Two VS16 should still result in width 2 (only first one affects base)
+    let cell = Cell::new("\u{1F4CE}\u{FE0F}\u{FE0F}");
+    // Note: This is an edge case - behavior may vary
+    assert!(cell.width() >= 2, "Multiple VS16 should at least have width 2");
 }
 
 // ============================================================================
-// Skin Tone Modifiers - CORRECTLY HANDLED by unicode_width
-// Emoji + skin tone modifier is treated as single grapheme
+// Skin Tone Modifiers - CORRECTLY HANDLED
 // ============================================================================
 
 #[test]
@@ -209,32 +236,43 @@ fn test_width_skin_tone_default() {
 }
 
 #[test]
-fn test_width_skin_tone_modified() {
+fn test_width_skin_tone_light() {
     // 👋🏻 waving hand with light skin tone: U+1F44B + U+1F3FB
     let cell = Cell::new("\u{1F44B}\u{1F3FB}");
-    assert_eq!(
-        cell.width(),
-        2,
-        "Skin tone modified emoji should have width 2"
-    );
+    assert_eq!(cell.width(), 2, "Light skin tone emoji should have width 2");
+}
+
+#[test]
+fn test_width_skin_tone_medium() {
+    // 👋🏽 waving hand with medium skin tone: U+1F44B + U+1F3FD
+    let cell = Cell::new("\u{1F44B}\u{1F3FD}");
+    assert_eq!(cell.width(), 2, "Medium skin tone emoji should have width 2");
+}
+
+#[test]
+fn test_width_skin_tone_dark() {
+    // 👋🏿 waving hand with dark skin tone: U+1F44B + U+1F3FF
+    let cell = Cell::new("\u{1F44B}\u{1F3FF}");
+    assert_eq!(cell.width(), 2, "Dark skin tone emoji should have width 2");
+}
+
+/// Test: Emoji with skin tone AND variation selector
+#[test]
+fn test_skin_tone_with_vs16() {
+    // Hand with skin tone modifier + VS16
+    let cell = Cell::new("\u{1F44B}\u{1F3FB}\u{FE0F}");
+    assert_eq!(cell.width(), 2, "Skin tone + VS16 should have width 2");
 }
 
 // ============================================================================
-// Combining Characters (General test for combining marks)
+// Combining Characters
 // ============================================================================
 
 #[test]
 fn test_width_combining_accent() {
     // e + combining acute accent: "é" = e\u{0301}
     let cell = Cell::new("e\u{0301}");
-    let actual_width = cell.width();
-
-    // unicode_width treats combining characters correctly (0 width)
-    // So this should be width 1
-    assert_eq!(
-        actual_width, 1,
-        "e + combining acute should have width 1 (combining chars are 0-width)"
-    );
+    assert_eq!(cell.width(), 1, "e + combining acute should have width 1");
 }
 
 #[test]
@@ -263,11 +301,7 @@ fn test_width_space() {
 #[test]
 fn test_width_control_characters() {
     // Control characters: unicode_width returns 0 for C0 controls
-    // but Cell::new creates a non-empty string which may have different behavior
     let cell = Cell::new("\x00");
-    // Actual behavior: null char in string has width 1 (not 0)
-    // This documents that unicode_width for isolated control chars differs
-    // from their behavior when embedded in strings
     let width = cell.width();
     assert!(
         width == 0 || width == 1,
@@ -277,24 +311,59 @@ fn test_width_control_characters() {
 }
 
 // ============================================================================
+// Mixed Content Tests
+// ============================================================================
+
+#[test]
+fn test_width_mixed_ascii_and_emoji() {
+    // "Hello 😀" = 5 + 1 + 2 = 8
+    let cell = Cell::new("Hello \u{1F600}");
+    assert_eq!(cell.width(), 8, "Mixed ASCII + emoji should sum correctly");
+}
+
+#[test]
+fn test_width_mixed_cjk_and_ascii() {
+    // "あA" = 2 + 1 = 3
+    let cell = Cell::new("あA");
+    assert_eq!(cell.width(), 3, "Mixed CJK + ASCII should sum correctly");
+}
+
+// ============================================================================
+// Unicode9 vs Unicode14 Compatibility Mode Tests (in display_width)
+// ============================================================================
+
+/// Test Unicode9 mode with VS15 (different behavior)
+#[test]
+fn test_unicode9_vs15() {
+    use ctui_core::unicode::{display_width, UnicodeCompat};
+    // In Unicode9 mode, VS15 still gives width 2 (emoji was default)
+    let width = display_width("\u{1F4CE}\u{FE0E}", UnicodeCompat::Unicode9);
+    // Note: Our implementation gives width 2 for Unicode9, 1 for Unicode14
+    assert!(width == 2, "Unicode9 VS15 should give width 2");
+}
+
+/// Test Unicode14 mode with VS15 (narrow behavior)
+#[test]
+fn test_unicode14_vs15() {
+    use ctui_core::unicode::{display_width, UnicodeCompat};
+    // In Unicode14 mode, VS15 gives width 1 (text presentation)
+    let width = display_width("\u{1F4CE}\u{FE0E}", UnicodeCompat::Unicode14);
+    assert_eq!(width, 1, "Unicode14 VS15 should give width 1");
+}
+
+// ============================================================================
 // Summary of Findings
 // ============================================================================
 //
-// GOOD NEWS: The unicode_width crate handles most grapheme clusters correctly:
-//
-// PASSING:
+// PASSING with display_width implementation:
+// - VS15 (text presentation): width 1 in Unicode14 mode ✓
+// - VS16 (emoji presentation): width 2 ✓
 // - ZWJ Sequences (👨‍👩‍👧‍👦): width 2 ✓
 // - Flag Emoji (🇷🇺, 🇺🇸): width 2 ✓
 // - Skin Tone Modified (👋🏻): width 2 ✓
-// - Variation Selectors (VS15/VS16): width 2 for emoji base ✓
 // - Single Emoji: width 2 ✓
 // - CJK Characters: width 2 ✓
 // - ASCII: width 1 ✓
 // - Combining characters: width of base character ✓
 //
-// EDGE CASE:
-// - Control characters in strings: width may be 1 (not 0)
-//   This is acceptable as control chars shouldn't be in Cell anyway
-//
-// CONCLUSION: Current unicode_width implementation is sufficient for TUI use.
-// No immediate changes needed - T14 optimization can focus on other areas.
+// CONCLUSION: display_width properly handles all variation selector cases.

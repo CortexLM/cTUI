@@ -67,6 +67,7 @@ pub mod state;
 pub mod style;
 pub mod symbol_table;
 pub mod terminal;
+pub mod unicode;
 
 pub use buffer::Buffer;
 pub use cell::Cell;
@@ -79,3 +80,4 @@ pub use state::State;
 pub use style::{Color, Modifier, Style};
 pub use symbol_table::{SymbolId, SymbolTable};
 pub use terminal::{Frame, Terminal, Widget};
+pub use unicode::{display_width, UnicodeCompat};

@@ -375,4 +375,79 @@ mod tests {
         assert_eq!(diff[0].0, 5);
         assert_eq!(diff[0].1, 3);
     }
+
+    // ========================================================================
+    // Variation Selector Tests (VS15/VS16)
+    // ========================================================================
+
+    #[test]
+    fn test_vs16_emoji_handling() {
+        // VS16 (emoji presentation) should result in width 2
+        let area = Rect::new(0, 0, 10, 5);
+        let buf1 = Buffer::empty(area);
+        let mut buf2 = Buffer::empty(area);
+
+        // Paperclip + VS16 = width 2 (emoji presentation)
+        buf2.set(0, 0, Cell::new("\u{1F4CE}\u{FE0F}"));
+        let mut trailing = Cell::new(" ");
+        trailing.skip = true;
+        buf2.set(1, 0, trailing);
+
+        let diff: Vec<_> = buf1.diff(&buf2).collect();
+        assert_eq!(diff.len(), 1, "VS16 emoji should emit one diff entry");
+        assert_eq!(diff[0].0, 0);
+        assert_eq!(diff[0].2.symbol, "\u{1F4CE}\u{FE0F}");
+    }
+
+    #[test]
+    fn test_vs15_text_handling() {
+        // VS15 (text presentation) should result in width 1
+        let area = Rect::new(0, 0, 10, 5);
+        let buf1 = Buffer::empty(area);
+        let mut buf2 = Buffer::empty(area);
+
+        // Paperclip + VS15 = width 1 (text presentation)
+        buf2.set(0, 0, Cell::new("\u{1F4CE}\u{FE0E}"));
+
+        let diff: Vec<_> = buf1.diff(&buf2).collect();
+        assert_eq!(diff.len(), 1, "VS15 text should emit one diff entry");
+        assert_eq!(diff[0].0, 0);
+        assert_eq!(diff[0].2.symbol, "\u{1F4CE}\u{FE0E}");
+    }
+
+    #[test]
+    fn test_zwj_sequence_diff() {
+        // ZWJ sequences should be treated as single width-2 grapheme
+        let area = Rect::new(0, 0, 10, 5);
+        let buf1 = Buffer::empty(area);
+        let mut buf2 = Buffer::empty(area);
+
+        // Family emoji (ZWJ sequence)
+        buf2.set(0, 0, Cell::new("\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F467}\u{200D}\u{1F466}"));
+        let mut trailing = Cell::new(" ");
+        trailing.skip = true;
+        buf2.set(1, 0, trailing);
+
+        let diff: Vec<_> = buf1.diff(&buf2).collect();
+        assert_eq!(diff.len(), 1, "ZWJ sequence should emit one diff entry");
+        assert_eq!(diff[0].2.width(), 2);
+    }
+
+    #[test]
+    fn test_skin_tone_diff() {
+        // Skin tone modified emoji should be width 2
+        let area = Rect::new(0, 0, 10, 5);
+        let buf1 = Buffer::empty(area);
+        let mut buf2 = Buffer::empty(area);
+
+        // Waving hand with light skin tone
+        buf2.set(0, 0, Cell::new("\u{1F44B}\u{1F3FB}"));
+        let mut trailing = Cell::new(" ");
+        trailing.skip = true;
+        buf2.set(1, 0, trailing);
+
+        let diff: Vec<_> = buf1.diff(&buf2).collect();
+        assert_eq!(diff.len(), 1, "Skin tone emoji should emit one diff entry");
+        assert_eq!(diff[0].2.width(), 2);
+    }
 }
