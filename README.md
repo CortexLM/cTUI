@@ -16,17 +16,26 @@
 
 cTUI (_see-too-eye_) is a Rust crate for building terminal user interfaces with a declarative, component-based approach. It brings modern frontend paradigms to the terminal, making it easy to create responsive, animated, and performant TUIs.
 
+## Features
+
+- **Layer System** - Z-index based layering for proper render ordering. Widgets can specify `z_index()` to control which elements appear on top.
+- **Event Batching** - Efficiently batch and process terminal events. Reduces overhead by coalescing rapid input sequences.
+- **Component Pooling** - Reuse component instances to minimize allocations and improve performance in frequently updated UIs.
+- **WASM Backend** - Compile to WebAssembly for browser-based terminals. Run your TUI in the browser with full feature parity.
+- **Float Colors** - `Color32` type for high-precision color manipulation (0.0-1.0 range). Enable with the `float-colors` feature.
+- **React-style Components** - Declarative components with hooks (`use_state`, `use_effect`) for familiar state management.
+
 ## Quickstart
 
 Add cTUI to your project:
 
-```shell
+\`\`\`shell
 cargo add ctui
-```
+\`\`\`
 
 Here's a minimal counter application:
 
-```rust
+\`\`\`rust
 use ctui::{component, App, Component, Terminal};
 use ctui::hooks::{use_state, use_effect};
 
@@ -53,7 +62,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let app = App::new(Counter {});
     terminal.run(app).await
 }
-```
+\`\`\`
 
 ## Documentation
 
@@ -66,15 +75,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 Get started quickly with project templates:
 
-```shell
+\`\`\`shell
 cargo install ctui-cli
 ctui new my-app --template counter
-```
+\`\`\`
 
 Available templates:
-- `basic` - Minimal hello world application
-- `counter` - Counter app with state management
-- `todo-app` - Full CRUD todo application
+- \`basic\` - Minimal hello world application
+- \`counter\` - Counter app with state management
+- \`todo-app\` - Full CRUD todo application
 
 ## Built with cTUI
 
@@ -82,9 +91,9 @@ Available templates:
 
 Building something with cTUI? Add a badge to your README:
 
-```md
+\`\`\`md
 [![Built with cTUI](https://img.shields.io/badge/Built_With_cTUI-000?style=flat-square)](https://github.com/CortexLM/cTUI)
-```
+\`\`\`
 
 ## Alternatives
 

@@ -16,6 +16,7 @@ cTUI/
 ├── ctui-macros/     # #[component] proc-macro
 ├── ctui-cli/        # Project scaffolding CLI
 ├── ctui-tests/      # Integration test harness
+├── ctui-wasm/       # WebAssembly backend for browser terminals
 ├── benches/         # Criterion benchmarks
 └── examples/        # counter, todo, dashboard, file_explorer, animation
 ```
@@ -32,6 +33,11 @@ cTUI/
 | Animation easing | `ctui-animate/src/easing.rs` |
 | Theme presets | `ctui-theme/src/theme.rs` |
 | Benchmarks | `benches/ratatui_baseline.rs` |
+| Event batching | `ctui-core/src/event/batcher.rs` |
+| Component pooling | `ctui-core/src/pool/mod.rs` |
+| Z-index layering | `ctui-core/src/terminal.rs` (Frame::render_widget) |
+| Float colors (Color32) | `ctui-core/src/style.rs` |
+| WASM backend | `ctui-wasm/src/` |
 
 ## KEY ABSTRACTIONS
 
@@ -99,6 +105,7 @@ ctui-core      (foundation, no deps)
 ├── ctui-layout     -> ctui-core
 ├── ctui-animate    -> ctui-core
 ├── ctui-theme      -> ctui-core
+├── ctui-wasm       -> ctui-core
 └── ctui-macros     (proc-macro, standalone)
 ```
 
@@ -109,3 +116,4 @@ ctui-core      (foundation, no deps)
 - Lints: `#![deny(unsafe_code)]`, clippy pedantic + nursery
 - Release profile: LTO + opt-level 3
 - Snapshot testing via insta crate
+- Features: `float-colors` for Color32 high-precision colors
