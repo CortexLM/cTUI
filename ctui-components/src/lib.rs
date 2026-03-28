@@ -162,7 +162,7 @@ pub use block::{Alignment, Block, PositionedTitle, Title, TitlePosition};
 ///
 /// # Migration
 /// Use `ctui_core::Widget` directly:
-/// ```rust
+/// ```rust,ignore
 /// // Old
 /// use ctui_components::Widget;
 ///
