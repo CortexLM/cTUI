@@ -274,7 +274,6 @@ impl Default for EventBatcher {
         Self::new()
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -371,5 +370,55 @@ mod tests {
         std::thread::sleep(Duration::from_millis(2));
 
         assert!(batcher.is_window_elapsed());
+    }
+
+    #[test]
+    fn test_batch_preserves_order() {
+        let mut batcher = EventBatcher::new();
+
+        // Feed events in specific order
+        batcher.feed(Event::key(KeyCode::Char('a'), KeyModifiers::new()));
+        batcher.feed(Event::key(KeyCode::Char('b'), KeyModifiers::new()));
+        batcher.feed(Event::key(KeyCode::Char('c'), KeyModifiers::new()));
+        batcher.feed(Event::key(KeyCode::Char('d'), KeyModifiers::new()));
+
+        let events = batcher.flush();
+
+        // Verify order is preserved: a, b, c, d
+        assert_eq!(events.len(), 4);
+        if let Event::Key(ke) = &events[0] {
+            assert!(matches!(ke.code, KeyCode::Char('a')));
+        } else {
+            panic!("Expected Key event");
+        }
+        if let Event::Key(ke) = &events[1] {
+            assert!(matches!(ke.code, KeyCode::Char('b')));
+        } else {
+            panic!("Expected Key event");
+        }
+        if let Event::Key(ke) = &events[2] {
+            assert!(matches!(ke.code, KeyCode::Char('c')));
+        } else {
+            panic!("Expected Key event");
+        }
+        if let Event::Key(ke) = &events[3] {
+            assert!(matches!(ke.code, KeyCode::Char('d')));
+        } else {
+            panic!("Expected Key event");
+        }
+    }
+
+    #[test]
+    fn test_empty_batch_returns_empty_vec() {
+        let mut batcher = EventBatcher::new();
+
+        // Do not feed any events, just flush
+        let events = batcher.flush();
+
+        assert!(events.is_empty());
+        assert_eq!(events.len(), 0);
+
+        // Batch is still empty after flush
+        assert!(batcher.is_empty());
     }
 }

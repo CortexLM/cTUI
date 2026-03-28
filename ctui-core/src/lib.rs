@@ -81,3 +81,10 @@ pub use style::{Color, Modifier, Style};
 pub use symbol_table::{SymbolId, SymbolTable};
 pub use terminal::{Frame, Terminal, Widget};
 pub use unicode::{display_width, UnicodeCompat};
+
+// Feature-gated modules
+#[cfg(feature = "component-pool")]
+pub mod pool;
+
+#[cfg(feature = "component-pool")]
+pub use pool::MessagePool;
