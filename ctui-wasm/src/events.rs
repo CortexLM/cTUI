@@ -1,6 +1,6 @@
 //! Event conversion utilities for WebAssembly.
 //!
-//! This module provides functions to convert web-sys events (KeyboardEvent, MouseEvent)
+//! This module provides functions to convert web-sys events (`KeyboardEvent`, `MouseEvent`)
 //! into cTUI's native Event types for seamless integration with the TUI framework.
 
 use ctui_core::event::{
@@ -8,14 +8,14 @@ use ctui_core::event::{
 };
 use web_sys::{KeyboardEvent, MouseEvent as WebMouseEvent};
 
-/// Converts a web-sys KeyboardEvent to a cTUI Event.
+/// Converts a web-sys `KeyboardEvent` to a cTUI `Event`.
 ///
-/// This function maps browser keyboard events to cTUI's KeyEvent structure,
+/// This function maps browser keyboard events to cTUI's `KeyEvent` structure,
 /// handling special keys, function keys, modifiers, and character keys.
 ///
 /// # Arguments
 ///
-/// * `js_event` - The web-sys KeyboardEvent from the browser
+/// * `js_event` - The web-sys `KeyboardEvent` from the browser
 ///
 /// # Returns
 ///
@@ -43,14 +43,14 @@ pub fn keyboard_event_to_key(js_event: &KeyboardEvent) -> Event {
     Event::Key(KeyEvent::with_kind(code, modifiers, kind))
 }
 
-/// Converts a web-sys MouseEvent to a cTUI Event.
+/// Converts a web-sys `MouseEvent` to a cTUI `Event`.
 ///
-/// This function maps browser mouse events to cTUI's MouseEvent structure,
+/// This function maps browser mouse events to cTUI's `MouseEvent` structure,
 /// converting pixel coordinates to cell coordinates and mapping button states.
 ///
 /// # Arguments
 ///
-/// * `js_event` - The web-sys MouseEvent from the browser
+/// * `js_event` - The web-sys `MouseEvent` from the browser
 /// * `char_width` - Width of a single character cell in pixels
 /// * `char_height` - Height of a single character cell in pixels
 ///
@@ -79,15 +79,18 @@ pub fn mouse_event_to_mouse(
     char_width: f64,
     char_height: f64,
 ) -> Event {
-    let column = (js_event.client_x() as f64 / char_width).floor() as u16;
-    let row = (js_event.client_y() as f64 / char_height).floor() as u16;
+    // Intentional truncation: screen coordinates are always positive and fit in u16
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+    let column = (f64::from(js_event.client_x()) / char_width).floor() as u16;
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+    let row = (f64::from(js_event.client_y()) / char_height).floor() as u16;
     let button = map_mouse_button(js_event.button());
     let modifiers = extract_mouse_modifiers(js_event);
 
     Event::Mouse(MouseEvent::new(column, row, button, modifiers))
 }
 
-/// Maps a web-sys KeyboardEvent to a KeyCode.
+/// Maps a web-sys `KeyboardEvent` to a `KeyCode`.
 ///
 /// Uses the `code` property for physical key identification (layout-independent)
 /// and falls back to `key` for character keys.
@@ -114,7 +117,7 @@ fn map_key_code(event: &KeyboardEvent) -> KeyCode {
         "Backspace" => KeyCode::Backspace,
 
         // Action keys
-        "Enter" => KeyCode::Enter,
+        "Enter" | "NumpadEnter" => KeyCode::Enter,
         "Tab" => KeyCode::Tab,
         "Escape" => KeyCode::Esc,
 
@@ -133,12 +136,11 @@ fn map_key_code(event: &KeyboardEvent) -> KeyCode {
         "F12" => KeyCode::F(12),
 
         // Numpad keys (treat as their primary equivalents)
-        "NumpadEnter" => KeyCode::Enter,
-        "NumpadAdd" => KeyCode::Char('+' ),
-        "NumpadSubtract" => KeyCode::Char('-' ),
-        "NumpadMultiply" => KeyCode::Char('*' ),
-        "NumpadDivide" => KeyCode::Char('/' ),
-        "NumpadDecimal" => KeyCode::Char('.' ),
+        "NumpadAdd" => KeyCode::Char('+'),
+        "NumpadSubtract" => KeyCode::Char('-'),
+        "NumpadMultiply" => KeyCode::Char('*'),
+        "NumpadDivide" => KeyCode::Char('/'),
+        "NumpadDecimal" => KeyCode::Char('.'),
         "Numpad0" => KeyCode::Char('0'),
         "Numpad1" => KeyCode::Char('1'),
         "Numpad2" => KeyCode::Char('2'),
@@ -170,7 +172,7 @@ fn map_key_code(event: &KeyboardEvent) -> KeyCode {
     }
 }
 
-/// Extracts KeyModifiers from a web-sys KeyboardEvent.
+/// Extracts `KeyModifiers` from a web-sys `KeyboardEvent`.
 fn extract_modifiers(event: &KeyboardEvent) -> KeyModifiers {
     KeyModifiers {
         shift: event.shift_key(),
@@ -184,7 +186,7 @@ fn extract_modifiers(event: &KeyboardEvent) -> KeyModifiers {
     }
 }
 
-/// Maps a web-sys mouse button code to a MouseButton.
+/// Maps a web-sys mouse button code to a `MouseButton`.
 ///
 /// Web button codes:
 /// - 0: Left button (primary)
@@ -192,16 +194,17 @@ fn extract_modifiers(event: &KeyboardEvent) -> KeyModifiers {
 /// - 2: Right button (secondary)
 /// - 3: Back button (browser back)
 /// - 4: Forward button (browser forward)
-fn map_mouse_button(button: i16) -> MouseButton {
+const fn map_mouse_button(button: i16) -> MouseButton {
     match button {
-        0 => MouseButton::Left,
+        // Explicitly handle known button codes for documentation
         1 => MouseButton::Middle,
         2 => MouseButton::Right,
-        _ => MouseButton::Left, // Default to left for unknown buttons
+        // Default to Left for button code 0 and any unknown/future codes
+        _ => MouseButton::Left,
     }
 }
 
-/// Extracts KeyModifiers from a web-sys MouseEvent.
+/// Extracts `KeyModifiers` from a web-sys `MouseEvent`.
 fn extract_mouse_modifiers(event: &WebMouseEvent) -> KeyModifiers {
     KeyModifiers {
         shift: event.shift_key(),
@@ -226,11 +229,14 @@ fn extract_mouse_modifiers(event: &WebMouseEvent) -> KeyModifiers {
 ///
 /// # Returns
 ///
-/// A cTUI `Event::Mouse` with MouseButton::WheelUp or WheelDown.
+/// A cTUI `Event::Mouse` with `MouseButton::WheelUp` or `WheelDown`.
 #[must_use]
 pub fn wheel_event_to_scroll(delta_y: f64, char_width: f64, char_height: f64, x: i32, y: i32) -> Event {
-    let column = (x as f64 / char_width).floor() as u16;
-    let row = (y as f64 / char_height).floor() as u16;
+    // Intentional truncation: screen coordinates are always positive and fit in u16
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+    let column = (f64::from(x) / char_width).floor() as u16;
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+    let row = (f64::from(y) / char_height).floor() as u16;
     let button = if delta_y < 0.0 {
         MouseButton::WheelUp
     } else {

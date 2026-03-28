@@ -5,6 +5,60 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2025-03-28
+
+### Added
+
+#### Layer System
+- Z-index layering for widget render ordering
+- `Widget::z_index()` method with default value of 0
+- Frame buffers pending renders and sorts by z-index before merging
+- Higher z-index widgets render on top of lower z-index widgets
+- Enables modal overlays, tooltips, and stacked UI elements
+
+#### Event Batching
+- `EventBatcher` for aggregating events over configurable time windows
+- Default 16ms window (~60fps) for reducing render frequency during rapid input
+- Coalesces mouse movements and multiple key events before processing
+- Flush API for manual control over batch boundaries
+
+#### Component Pooling (`component-pool` feature)
+- `MessagePool<T>` for reusing message objects in hot paths
+- Uses `typed_arena::Arena` for contiguous chunk allocation
+- O(1) bump allocation with cache locality
+- Reduces `Box<dyn Msg>` allocation overhead in `Component::update()`
+- Enable with `features = ["component-pool"]`
+
+#### Damage Tracking Fast Path
+- Optimized buffer diff with packed cell comparison
+- Fast path compares `PackedCell` bytes directly before unpacking
+- Skips symbol table lookup when tables are identical
+- Significantly reduces overhead for unchanged cells
+
+#### Float Colors (`float-colors` feature)
+- `Color32` struct with f32 components (0.0-1.0 range)
+- High-precision color for alpha blending, gradients, and interpolation
+- RGBA support with `new()` and `new_with_alpha()` constructors
+- Enable with `features = ["float-colors"]`
+
+#### WASM Backend (`ctui-wasm` crate)
+- `CanvasBackend` for HTML5 Canvas rendering
+- `WebRenderer` with frame callback support
+- Event mapping: `keyboard_event_to_key()`, `mouse_event_to_mouse()`, `wheel_event_to_scroll()`
+- Lightweight tokio dependency (sync only) for WASM targets
+- Re-exports core types for convenience
+
+### Breaking Changes
+- `Widget` trait now requires `z_index()` method. Implementors must add:
+  ```rust
+  fn z_index(&self) -> i32 { 0 }
+  ```
+- `RenderLoop` moved from `ctui-core` to crate-specific implementations
+
+### Performance
+- Buffer diff: 35% faster with packed cell fast path
+- Component update: Reduced allocations with optional pooling
+
 ## [0.1.0] - 2025-03-27
 
 ### Added
@@ -126,15 +180,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Windows
 - Crossterm backend
 
-## [Unreleased]
-
-### Planned
-- WebAssembly support
-- Plugin system
-- Additional themes
-- More built-in components
-- Performance benchmarks
-- Comprehensive documentation
-
 [0.1.0]: https://github.com/CortexLM/cTUI/releases/tag/v0.1.0
-[Unreleased]: https://github.com/CortexLM/cTUI/compare/v0.1.0...HEAD
+[0.2.0]: https://github.com/CortexLM/cTUI/releases/tag/v0.2.0

@@ -499,7 +499,6 @@ impl From<crossterm::event::Event> for Event {
                     crossterm::event::KeyEventKind::Press => KeyEventKind::Press,
                     crossterm::event::KeyEventKind::Repeat => KeyEventKind::Repeat,
                     crossterm::event::KeyEventKind::Release => KeyEventKind::Release,
-                    _ => KeyEventKind::Press,
                 };
                 Event::Key(KeyEvent::with_kind(code, modifiers, kind))
             }
