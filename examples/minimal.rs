@@ -1,6 +1,6 @@
 //! Minimal example - simplest Hello World demonstration
 //!
-//! Run with: `cargo run --example minimal`
+//! Run with: `cargo run -p ctui-benches --example minimal`
 
 use ctui_core::{Buffer, Rect};
 
@@ -23,7 +23,11 @@ fn main() {
     for row in 0..area.height {
         let mut line = String::new();
         for col in 0..area.width {
-            line.push_str(&buf.cell_at(area.x + col, area.y + row).symbol);
+            if let Some(cell) = buf.get(area.x + col, area.y + row) {
+                line.push_str(&cell.symbol);
+            } else {
+                line.push(' ');
+            }
         }
         if !line.trim().is_empty() {
             println!("{}", line.trim_end());
