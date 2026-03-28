@@ -264,4 +264,69 @@ mod tests {
         let back = Color::from(color32);
         assert_eq!(original, back);
     }
+
+    #[cfg(feature = "float-colors")]
+    #[test]
+    fn test_color32_f32_to_u8_mapping() {
+        // Test edge cases: f32 0.0-1.0 maps to u8 0-255
+        let test_cases = [
+            (0.0_f32, 0_u8),
+            (1.0_f32, 255_u8),
+            (0.5_f32, 128_u8),
+            (0.25_f32, 64_u8),
+            (0.75_f32, 191_u8),
+        ];
+        for (f32_val, expected_u8) in test_cases {
+            let color32 = Color32::new(f32_val, f32_val, f32_val);
+            let color = Color::from(color32);
+            if let Color::Rgb(r, g, b) = color {
+                assert_eq!(r, expected_u8, "Red channel mismatch for f32={}", f32_val);
+                assert_eq!(g, expected_u8, "Green channel mismatch for f32={}", f32_val);
+                assert_eq!(b, expected_u8, "Blue channel mismatch for f32={}", f32_val);
+            } else {
+                panic!("Expected Rgb color");
+            }
+        }
+    }
+
+    #[cfg(feature = "float-colors")]
+    #[test]
+    fn test_color32_alpha_values() {
+        // Test alpha channel is preserved
+        let opaque = Color32::new(0.5, 0.5, 0.5);
+        assert!((opaque.a - 1.0).abs() < 0.001, "Default alpha should be 1.0");
+
+        let semi_transparent = Color32::new_with_alpha(0.5, 0.5, 0.5, 0.5);
+        assert!((semi_transparent.a - 0.5).abs() < 0.001, "Alpha should be 0.5");
+
+        let transparent = Color32::transparent();
+        assert!((transparent.a - 0.0).abs() < 0.001, "Transparent alpha should be 0.0");
+
+        // Test alpha extremes
+        let zero_alpha = Color32::new_with_alpha(1.0, 0.0, 0.0, 0.0);
+        assert!((zero_alpha.a - 0.0).abs() < 0.001);
+
+        let full_alpha = Color32::new_with_alpha(0.0, 1.0, 0.0, 1.0);
+        assert!((full_alpha.a - 1.0).abs() < 0.001);
+    }
+
+    #[cfg(feature = "float-colors")]
+    #[test]
+    fn test_color32_rgb_roundtrip_multiple_values() {
+        // Test multiple RGB roundtrip values
+        let test_colors = [
+            Color::Rgb(0, 0, 0),
+            Color::Rgb(255, 255, 255),
+            Color::Rgb(255, 0, 0),
+            Color::Rgb(0, 255, 0),
+            Color::Rgb(0, 0, 255),
+            Color::Rgb(128, 128, 128),
+            Color::Rgb(64, 128, 192),
+        ];
+        for original in test_colors {
+            let color32 = Color32::from(original);
+            let back = Color::from(color32);
+            assert_eq!(original, back, "Roundtrip failed for {:?}", original);
+        }
+    }
 }
