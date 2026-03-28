@@ -348,7 +348,7 @@ fn test_render_with_layout() {
     }
 
     impl Widget for ColoredWidget {
-        fn render(self, area: Rect, buffer: &mut Buffer) {
+        fn render(&self, area: Rect, buffer: &mut Buffer) {
             for y in area.y..area.y.saturating_add(area.height) {
                 for x in area.x..area.x.saturating_add(area.width) {
                     buffer.modify_cell(x, y, |cell| { cell.symbol = self.id.to_string(); });

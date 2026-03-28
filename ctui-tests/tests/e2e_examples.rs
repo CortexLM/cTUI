@@ -304,7 +304,7 @@ struct DashboardWidget {
 }
 
 impl Widget for DashboardWidget {
-    fn render(self, area: Rect, buffer: &mut Buffer) {
+    fn render(&self, area: Rect, buffer: &mut Buffer) {
         for x in area.x..area.x.saturating_add(area.width) {
             buffer.modify_cell(x, area.y, |cell| { cell.symbol = "═".to_string(); });
             buffer.modify_cell(x, area.y + area.height.saturating_sub(1), |cell| { cell.symbol = "═".to_string(); });

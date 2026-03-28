@@ -123,7 +123,7 @@ impl LayoutCache {
 /// are rendered on top of lower values. The default z-index is 0.
 pub trait Widget {
     /// Renders the widget to the given buffer within the specified area
-    fn render(self, area: Rect, buffer: &mut Buffer);
+    fn render(&self, area: Rect, buffer: &mut Buffer);
 
     /// Returns the z-index for layer order during rendering.
     ///
@@ -746,7 +746,7 @@ mod tests {
 
         struct TestWidget;
         impl Widget for TestWidget {
-            fn render(self, area: Rect, buffer: &mut Buffer) {
+            fn render(&self, area: Rect, buffer: &mut Buffer) {
                 for y in area.y..area.y + area.height {
                     for x in area.x..area.x + area.width {
                         buffer.modify_cell(x, y, |cell| {
@@ -778,7 +778,7 @@ mod tests {
         // Widget with higher z-index (renders on top)
         struct TopWidget;
         impl Widget for TopWidget {
-            fn render(self, area: Rect, buffer: &mut Buffer) {
+            fn render(&self, area: Rect, buffer: &mut Buffer) {
                 for y in area.y..area.y + area.height {
                     for x in area.x..area.x + area.width {
                         buffer.modify_cell(x, y, |cell| {
@@ -795,7 +795,7 @@ mod tests {
         // Widget with lower z-index (renders first, gets overwritten)
         struct BottomWidget;
         impl Widget for BottomWidget {
-            fn render(self, area: Rect, buffer: &mut Buffer) {
+            fn render(&self, area: Rect, buffer: &mut Buffer) {
                 for y in area.y..area.y + area.height {
                     for x in area.x..area.x + area.width {
                         buffer.modify_cell(x, y, |cell| {
@@ -826,7 +826,7 @@ mod tests {
         // Verify default z_index is 0
         struct DefaultWidget;
         impl Widget for DefaultWidget {
-            fn render(self, _area: Rect, _buffer: &mut Buffer) {}
+            fn render(&self, _area: Rect, _buffer: &mut Buffer) {}
         }
         let widget = DefaultWidget;
         assert_eq!(widget.z_index(), 0);

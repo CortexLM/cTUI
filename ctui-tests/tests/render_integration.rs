@@ -119,7 +119,7 @@ fn test_frame_render_widget() {
     struct TestWidget;
 
     impl Widget for TestWidget {
-        fn render(self, area: Rect, buffer: &mut Buffer) {
+        fn render(&self, area: Rect, buffer: &mut Buffer) {
             for y in area.y..area.y.saturating_add(area.height) {
                 for x in area.x..area.x.saturating_add(area.width) {
                     buffer.modify_cell(x, y, |cell| { cell.symbol = "X".to_string(); });

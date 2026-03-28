@@ -4,10 +4,15 @@ Built-in UI components for the cTUI framework.
 
 ## Overview
 
-cTUI provides a rich set of pre-built components. All components implement the `Widget` trait for simple rendering.
+cTUI provides a rich set of pre-built components. All components implement the `Widget` trait (defined in ctui-core) for simple rendering.
 
 ```rust
-use ctui_components::Widget;
+use ctui_components::Widget; // Re-exported from ctui_core
+
+pub trait Widget {
+    fn render(&self, area: Rect, buf: &mut Buffer);
+    fn z_index(&self) -> i32 { 0 }
+}
 
 pub trait Widget {
     fn render(&self, area: Rect, buf: &mut Buffer);
@@ -722,9 +727,17 @@ let form = Form::new()
 All components implement `Widget`:
 
 ```rust
+## Widget Trait
+
+All components implement `Widget`:
+
+```rust
 pub trait Widget {
     /// Render to buffer
     fn render(&self, area: Rect, buf: &mut Buffer);
+
+    /// Returns z-index for layer ordering (higher on top)
+    fn z_index(&self) -> i32 { 0 }
 }
 
 pub trait WidgetExt: Widget + Sized {
@@ -735,11 +748,19 @@ pub trait WidgetExt: Widget + Sized {
     fn render_to_string(&self, width: u16, height: u16) -> String;
 }
 ```
+    fn render_to_string(&self, width: u16, height: u16) -> String;
+}
+```
 
 ## Creating Custom Components
 
 ```rust
-use ctui_components::Widget;
+use ctui_components::Widget; // Re-exported from ctui_core
+
+pub trait Widget {
+    fn render(&self, area: Rect, buf: &mut Buffer);
+    fn z_index(&self) -> i32 { 0 }
+}
 use ctui_core::{Buffer, Rect};
 
 struct MyWidget {

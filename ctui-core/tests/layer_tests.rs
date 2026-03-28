@@ -31,7 +31,7 @@ impl LayerWidget {
 }
 
 impl Widget for LayerWidget {
-    fn render(self, area: Rect, buffer: &mut Buffer) {
+    fn render(&self, area: Rect, buffer: &mut Buffer) {
         for y in area.y..area.y.saturating_add(area.height) {
             for x in area.x..area.x.saturating_add(area.width) {
                 buffer.set(x, y, Cell::new(&self.symbol));
@@ -58,7 +58,7 @@ impl DefaultZIndexWidget {
 }
 
 impl Widget for DefaultZIndexWidget {
-    fn render(self, area: Rect, buffer: &mut Buffer) {
+    fn render(&self, area: Rect, buffer: &mut Buffer) {
         for y in area.y..area.y.saturating_add(area.height) {
             for x in area.x..area.x.saturating_add(area.width) {
                 buffer.set(x, y, Cell::new(&self.symbol));

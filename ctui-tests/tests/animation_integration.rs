@@ -251,7 +251,7 @@ struct AnimatedWidget {
 }
 
 impl Widget for AnimatedWidget {
-    fn render(self, area: Rect, buf: &mut Buffer) {
+    fn render(&self, area: Rect, buf: &mut Buffer) {
         let width = (area.width as f32 * self.progress).min(area.width as f32) as u16;
         for x in area.x..area.x.saturating_add(width) {
             buf.modify_cell(x, area.y, |cell| { cell.symbol = "#".to_string(); });

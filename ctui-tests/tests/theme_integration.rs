@@ -216,7 +216,7 @@ struct ThemedWidget {
 }
 
 impl Widget for ThemedWidget {
-    fn render(self, area: Rect, buffer: &mut Buffer) {
+    fn render(&self, area: Rect, buffer: &mut Buffer) {
         let text = &self.theme.name;
         for (i, ch) in text.chars().take(area.width as usize).enumerate() {
             buffer.modify_cell(area.x + i as u16, area.y, |cell| { cell.symbol = ch.to_string(); });

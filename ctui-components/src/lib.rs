@@ -97,37 +97,6 @@
 #![allow(clippy::branches_sharing_code)]
 use ctui_core::{Buffer, Rect};
 
-/// A trait for stateless widgets that can render themselves.
-///
-/// `Widget` is a simplified rendering interface compared to `Component`.
-/// It's useful for widgets that don't need to manage internal state or
-/// handle messages - they just need to render to a buffer.
-///
-/// # Example
-///
-/// ```
-/// use ctui_components::Widget;
-/// use ctui_core::{Buffer, Rect};
-///
-/// struct HelloWorld;
-///
-/// impl Widget for HelloWorld {
-///     fn render(&self, area: Rect, buf: &mut Buffer) {
-///         buf.modify_cell(area.x, area.y, |cell| {
-///             cell.symbol = "Hello, World!".to_string();
-///         });
-///     }
-/// }
-/// ```
-pub trait Widget {
-    /// Renders the widget to the given buffer area.
-    ///
-    /// # Arguments
-    ///
-    /// * `area` - The rectangular area allocated for this widget
-    /// * `buf` - The buffer to render into
-    fn render(&self, area: Rect, buf: &mut Buffer);
-}
 
 /// Extension trait for rendering widgets.
 pub trait WidgetExt: Widget + Sized {
@@ -188,6 +157,7 @@ pub mod text;
 pub mod tree;
 
 pub use block::{Alignment, Block, PositionedTitle, Title, TitlePosition};
+pub use ctui_core::Widget;
 pub use borders::{BorderType, Borders};
 pub use canvas::{Canvas, Point, Shape};
 pub use chart::{BarOrientation, Chart, ChartProps, ChartType, DataPoint};
