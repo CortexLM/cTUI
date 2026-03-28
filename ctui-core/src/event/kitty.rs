@@ -178,7 +178,7 @@ impl KittyKeyboardParser {
         };
 
         let parts: Vec<&str> = keycode_mods.split(';').collect();
-        if parts.len() < 1 {
+        if parts.is_empty() {
             return None;
         }
 
@@ -261,6 +261,7 @@ impl KittyKeyboardParser {
     }
 
     /// Finalize parsing and produce a KeyEvent
+    #[allow(clippy::unnecessary_wraps)]
     fn finalize(&self) -> Option<KeyEvent> {
         let code = Self::keycode_to_key_code(self.keycode);
         let modifiers = decode_kitty_modifiers(self.modifiers);

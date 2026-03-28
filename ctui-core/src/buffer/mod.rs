@@ -177,6 +177,7 @@ impl Buffer {
     }
 
     /// Clears the buffer with the given cell value.
+    #[allow(clippy::significant_drop_tightening)]
     pub fn clear_with(&mut self, cell: Cell) {
         let mut table = self.symbol_table.write().unwrap();
         let packed = PackedCell::from_cell(&cell, &mut table);
@@ -213,6 +214,7 @@ impl Buffer {
     ///
     /// The cell symbols remain unchanged, but the style (colors and modifiers)
     /// is applied to all cells.
+    #[allow(clippy::significant_drop_tightening, clippy::needless_collect)]
     pub fn fill(&mut self, style: Style) {
         let table = self.symbol_table.read().unwrap();
         let cells: Vec<Cell> = self.content.iter().map(|p| p.to_cell(&table)).collect();

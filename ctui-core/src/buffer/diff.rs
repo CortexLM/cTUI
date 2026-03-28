@@ -57,6 +57,7 @@ impl<'prev, 'next> BufferDiff<'prev, 'next> {
         }
     }
 
+    #[allow(clippy::significant_drop_tightening)]
     fn get_current(&self) -> Option<(u16, u16, Cell)> {
         if self.pos >= self.next.len() {
             return None;
@@ -71,6 +72,7 @@ impl<'prev, 'next> BufferDiff<'prev, 'next> {
         Some((x, y, cell))
     }
 
+    #[allow(clippy::significant_drop_tightening)]
     fn cells_differ(&self) -> bool {
         let prev_cell = self.prev.get(self.pos);
         let next_cell = self.next.get(self.pos);
@@ -95,7 +97,7 @@ impl<'prev, 'next> BufferDiff<'prev, 'next> {
     }
 }
 
-impl<'next> Iterator for BufferDiff<'_, 'next> {
+impl Iterator for BufferDiff<'_, '_> {
     type Item = (u16, u16, Cell);
 
     fn next(&mut self) -> Option<Self::Item> {

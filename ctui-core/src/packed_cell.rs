@@ -115,7 +115,7 @@ fn unpack_color(packed: u16) -> Color {
         let g4 = ((packed >> 5) & 0x0F) as u8;
         let b5 = (packed & 0x1F) as u8;
         let r = (r5 << 3) | (r5 >> 2);
-        let g = (g4 << 4) | (g4 >> 0);
+        let g = (g4 << 4) | g4;
         let b = (b5 << 3) | (b5 >> 2);
         Color::Rgb(r, g, b)
     } else {
@@ -200,7 +200,7 @@ fn unpack_modifier(packed: u16) -> Modifier {
 /// This struct uses `repr(packed(1))` to ensure tight packing. Accessors
 /// copy values out (safe) rather than returning references (potentially UB).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-#[repr(packed(1))]
+#[repr(C, packed)]
 pub struct PackedCell {
     /// Symbol identifier referencing `SymbolTable`
     symbol_id: u16,

@@ -371,7 +371,7 @@ fn test_dashboard_layout() {
 
 #[test]
 fn test_key_press_simulation() {
-    use ctui_core::{Event, EventHandler, KeyCode, KeyEvent, KeyModifiers};
+    use ctui_core::{Event, EventHandler, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 
     let mut counter = CounterApp::create(CounterProps { initial: 0 });
     counter.on_mount();
@@ -379,6 +379,7 @@ fn test_key_press_simulation() {
     let key_event = KeyEvent {
         code: KeyCode::Char('+'),
         modifiers: KeyModifiers::new(),
+        kind: KeyEventKind::Press,
     };
 
     if true {
