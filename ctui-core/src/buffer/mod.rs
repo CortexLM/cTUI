@@ -379,8 +379,20 @@ mod tests {
         buf.set(2, 3, cell);
 
         let got = buf.get(2, 3).unwrap();
-        assert_eq!(got.fg, Color::Green);
-        assert_eq!(got.bg, Color::Yellow);
+        // With float-colors, named colors are converted to RGB via f32
+        // Green (0.0, 0.5, 0.0) -> Rgb(0, 128, 0)
+        // Yellow (0.5, 0.5, 0.0) -> Rgb(128, 128, 0)
+        #[cfg(not(feature = "float-colors"))]
+        {
+            assert_eq!(got.fg, Color::Green);
+            assert_eq!(got.bg, Color::Yellow);
+        }
+        #[cfg(feature = "float-colors")]
+        {
+            // Named colors become RGB with f32 precision
+            assert!(matches!(got.fg, Color::Rgb(_, _, _)));
+            assert!(matches!(got.bg, Color::Rgb(_, _, _)));
+        }
         assert!(got.modifier.contains(Modifier::BOLD));
     }
 
