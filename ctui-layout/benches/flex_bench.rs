@@ -1,7 +1,7 @@
 #![allow(missing_docs)]
 
 use criterion::{black_box, criterion_group, criterion_main, BatchSize, Criterion, Throughput};
-use ctui_core::{LayoutCache, Rect};
+use ctui_core::{terminal::LayoutCache, Rect};
 use ctui_layout::{AlignItems, Constraint, JustifyContent, Layout};
 
 fn bench_split(c: &mut Criterion) {

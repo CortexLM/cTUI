@@ -294,6 +294,30 @@ impl FlexLayout {
         self
     }
 
+    /// Creates a Taffy-backed layout engine (requires `taffy-layout` feature)
+    ///
+    /// This method returns a `TaffyLayoutEngine` configured with the same
+    /// settings as this FlexLayout. Taffy provides a battle-tested flexbox
+    /// implementation that may differ slightly from cTUI's native algorithm.
+    #[cfg(feature = "taffy-layout")]
+    #[must_use]
+    pub fn with_taffy(self) -> crate::TaffyLayoutEngine {
+        crate::TaffyLayoutEngine::new()
+            .direction(self.direction)
+            .justify_content(self.justify_content)
+            .align_items(self.align_items)
+            .gap(self.gap)
+            .wrap(self.flex_wrap)
+            .align_content(self.align_content)
+    }
+
+    /// Splits the given area into rectangles using the Taffy engine
+    #[cfg(feature = "taffy-layout")]
+    #[must_use]
+    pub fn split_with_taffy(&self, area: Rect, constraints: &[Constraint]) -> Vec<Rect> {
+        (*self).with_taffy().split(area, constraints)
+    }
+
     /// Splits the given area into rectangles based on constraints
     ///
     /// # Arguments

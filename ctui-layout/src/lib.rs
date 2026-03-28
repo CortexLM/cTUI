@@ -68,6 +68,9 @@ mod flex;
 mod grid;
 mod validation;
 
+#[cfg(feature = "taffy-layout")]
+mod taffy_engine;
+
 pub use absolute::{AbsoluteItem, AbsoluteLayout, StackingContext, ZIndex, DEFAULT_Z_INDEX};
 pub use constraint::Constraint;
 pub use flex::{
@@ -78,5 +81,8 @@ pub use validation::{
     no_overlapping_rects, rect_fits_in_container, LayoutValidationError, LayoutValidator,
     ValidationResult,
 };
+
+#[cfg(feature = "taffy-layout")]
+pub use taffy_engine::TaffyLayoutEngine;
 
 pub use ctui_core::Rect;

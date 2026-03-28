@@ -8,6 +8,11 @@ repository.workspace = true
 
 [dependencies]
 ctui-core = { path = "../ctui-core" }
+taffy = { version = "0.9", optional = true, default-features = false, features = ["std", "flexbox", "taffy_tree"] }
+
+[features]
+default = []
+taffy-layout = ["dep:taffy"]
 
 [dev-dependencies]
 proptest = { workspace = true }
@@ -19,3 +24,8 @@ workspace = true
 [[bench]]
 name = "flex_bench"
 harness = false
+
+[[bench]]
+name = "taffy_compare"
+harness = false
+required-features = ["taffy-layout"]
