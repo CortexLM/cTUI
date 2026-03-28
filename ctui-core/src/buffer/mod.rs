@@ -375,4 +375,137 @@ mod tests {
         assert!(buf.get(4, 5).is_none());
         assert!(buf.get(15, 5).is_none());
     }
+
+    // ===== Edge case tests =====
+
+    #[test]
+    fn test_buffer_zero_area() {
+        // Zero-area buffer should have no content
+        let buf = Buffer::empty(Rect::default());
+        assert_eq!(buf.area.width, 0);
+        assert_eq!(buf.area.height, 0);
+        assert_eq!(buf.len(), 0);
+        assert!(buf.is_empty());
+
+        // Operations on zero-area buffer should return None
+        assert!(buf.get(0, 0).is_none());
+    }
+
+    #[test]
+    fn test_buffer_one_by_one() {
+        // Minimal 1x1 buffer
+        let mut buf = Buffer::empty(Rect::new(0, 0, 1, 1));
+        assert_eq!(buf.area.width, 1);
+        assert_eq!(buf.area.height, 1);
+        assert_eq!(buf.len(), 1);
+        assert!(!buf.is_empty());
+
+        // Should be able to set and get the single cell
+        buf.set(0, 0, Cell::new("X"));
+        assert_eq!(buf.get(0, 0).unwrap().symbol, "X");
+
+        // Out of bounds should return None
+        assert!(buf.get(1, 0).is_none());
+        assert!(buf.get(0, 1).is_none());
+    }
+
+    #[test]
+    fn test_buffer_very_large() {
+        // Large 1000x1000 buffer (1 million cells)
+        let buf = Buffer::empty(Rect::new(0, 0, 1000, 1000));
+        assert_eq!(buf.area.width, 1000);
+        assert_eq!(buf.area.height, 1000);
+        assert_eq!(buf.len(), 1_000_000);
+        assert!(!buf.is_empty());
+
+        // Should be able to access corners
+        assert!(buf.get(0, 0).is_some());
+        assert!(buf.get(999, 999).is_some());
+        assert!(buf.get(999, 0).is_some());
+        assert!(buf.get(0, 999).is_some());
+
+        // Just outside should be None
+        assert!(buf.get(1000, 0).is_none());
+        assert!(buf.get(0, 1000).is_none());
+    }
+
+    #[test]
+    fn test_buffer_multi_width_char_at_boundary() {
+        // Test emoji (2-cell width) at the right edge of buffer
+        // Emoji at x=width-2 should fit, at x=width-1 it would overflow
+        let mut buf = Buffer::empty(Rect::new(0, 0, 10, 5));
+
+        // Place emoji at valid position (leaving 2 cells)
+        buf.set(8, 0, Cell::new("😀"));
+        assert_eq!(buf.get(8, 0).unwrap().symbol, "😀");
+        assert_eq!(buf.get(8, 0).unwrap().width(), 2);
+
+        // Position at the last cell - multi-width char would overflow visually
+        // The buffer allows setting but renderer must handle this edge case
+        buf.set(9, 0, Cell::new("🎉"));
+        assert_eq!(buf.get(9, 0).unwrap().symbol, "🎉");
+
+        // Emoji in middle of buffer works normally
+        buf.set(5, 2, Cell::new("🚀"));
+        assert_eq!(buf.get(5, 2).unwrap().symbol, "🚀");
+    }
+
+    #[test]
+    fn test_buffer_symbol_longer_than_4_chars() {
+        // Symbols can be longer than 4 characters (e.g., multiple emoji or ligatures)
+        let mut buf = Buffer::empty(Rect::new(0, 0, 20, 10));
+
+        // Multi-character symbol (combination emoji)
+        let long_symbol = "👨‍👩‍👧‍👦"; // Family emoji (actually rendered as multiple chars but stored as single symbol)
+        buf.set(0, 0, Cell::new(long_symbol));
+        assert_eq!(buf.get(0, 0).unwrap().symbol, long_symbol);
+
+        // Another long symbol example
+        let another_long = "🇬🇧🇺🇸"; // Flag sequence
+        buf.set(5, 5, Cell::new(another_long));
+        assert_eq!(buf.get(5, 5).unwrap().symbol, another_long);
+
+        // Text longer than 4 chars
+        let text_symbol = "Hello";
+        buf.set(10, 0, Cell::new(text_symbol));
+        assert_eq!(buf.get(10, 0).unwrap().symbol, text_symbol);
+    }
+
+    #[test]
+    fn test_buffer_multi_width_cjk_at_boundary() {
+        // Test CJK character (2-cell width) at buffer boundaries
+        let mut buf = Buffer::empty(Rect::new(0, 0, 5, 5));
+
+        // CJK at last valid position for 2-width char
+        buf.set(3, 0, Cell::new("あ")); // at x=3, occupies cells 3 and 4
+        assert_eq!(buf.get(3, 0).unwrap().symbol, "あ");
+
+        // CJK at position that would overflow
+        buf.set(4, 1, Cell::new("日")); // at x=4, but width is 2
+        assert_eq!(buf.get(4, 1).unwrap().symbol, "日");
+
+        // Regular positions work fine
+        buf.set(0, 0, Cell::new("中"));
+        assert_eq!(buf.get(0, 0).unwrap().symbol, "中");
+    }
+
+    #[test]
+    fn test_buffer_skip_flag_placement() {
+        // Test the skip flag for trailing cells of wide characters
+        let mut buf = Buffer::empty(Rect::new(0, 0, 10, 10));
+
+        // Create a cell with skip flag set
+        let mut wide_cell = Cell::new("😀");
+        wide_cell.set_skip(true);
+
+        buf.set(0, 0, wide_cell.clone());
+
+        let cell = buf.get(0, 0).unwrap();
+        assert!(cell.skip);
+        assert_eq!(cell.symbol, "😀");
+
+        // Set skip back to false
+        buf.get_mut(0, 0).unwrap().set_skip(false);
+        assert!(!buf.get(0, 0).unwrap().skip);
+    }
 }

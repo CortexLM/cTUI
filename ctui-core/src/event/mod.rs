@@ -393,6 +393,17 @@ impl From<crossterm::event::Event> for Event {
     }
 }
 
+/// Kitty keyboard protocol tests.
+///
+/// These tests cover the Kitty keyboard protocol extension which provides:
+/// - Key event kinds (Press, Repeat, Release)
+/// - Extended modifiers (Hyper, Meta, CapsLock, NumLock)
+/// - Distinguishing key-up vs key-down events
+///
+/// Reference: https://sw.kovidgoyal.net/kitty/keyboard-protocol/
+#[cfg(test)]
+mod kitty_test;
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -72,6 +72,10 @@ harness = false
 name = "buffer_diff"
 harness = false
 
+[[bench]]
+name = "buffer_memory"
+harness = false
+
 [[example]]
 name = "counter"
 path = "examples/counter.rs"
