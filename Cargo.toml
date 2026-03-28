@@ -8,7 +8,7 @@ members = [
     "ctui-animate",
     "ctui-theme",
     "ctui-cli",
-    "ctui-tests",
+    "ctui-tests", "ctui-wasm",
 ]
 default-members = ["ctui-core"]
 

@@ -7,6 +7,7 @@ edition.workspace = true
 default = []
 event-stream = ["crossterm/event-stream"]
 component-pool = ["dep:typed-arena"]
+float-colors = []
 
 [dependencies]
 tokio = { workspace = true }
