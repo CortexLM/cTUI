@@ -10,11 +10,19 @@ component-pool = ["dep:typed-arena"]
 float-colors = []
 
 [dependencies]
-tokio = { workspace = true }
-crossterm = { workspace = true, features = ["event-stream"] }
+# Core deps that work on all targets
 unicode-width = { workspace = true }
 bitflags = { workspace = true }
 typed-arena = { version = "2.0", optional = true }
+
+# Terminal-specific deps (native only)
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+tokio = { workspace = true }
+crossterm = { workspace = true, features = ["event-stream"] }
+
+# WASM-specific lightweight tokio (sync only)
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+tokio = { version = "1", features = ["sync"] }
 
 [dev-dependencies]
 insta = { workspace = true }

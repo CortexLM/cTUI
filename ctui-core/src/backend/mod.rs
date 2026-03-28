@@ -3,15 +3,19 @@
 //! This module defines the Backend trait that abstracts over different
 //! terminal backends (crossterm, termion, etc.)
 
+#[cfg(not(target_arch = "wasm32"))]
 mod caps;
+#[cfg(not(target_arch = "wasm32"))]
 mod crossterm;
 
+#[cfg(not(target_arch = "wasm32"))]
 pub use caps::Capabilities;
 
 use std::io::{self, Result};
 
 use crate::{cell::Cell, geometry::Rect, style::Color};
 
+#[cfg(not(target_arch = "wasm32"))]
 pub use crossterm::CrosstermBackend;
 
 /// Cursor style for terminal display
@@ -374,7 +378,7 @@ pub trait Backend {
 
 pub mod test;
 
-#[cfg(test)]
+#[cfg(all(test, not(target_arch = "wasm32")))]
 mod tests {
     use super::*;
 

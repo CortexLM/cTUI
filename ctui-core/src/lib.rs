@@ -3,12 +3,12 @@
 //! This crate provides the low-level building blocks for terminal UI rendering:
 //! - Buffer and Cell types for screen representation
 //! - Backend trait for terminal abstraction
-//! - Terminal struct for managing the terminal state
+//! - Terminal struct for managing the terminal state (native only)
 //! - Geometry primitives for layout calculations
 //! - Style types for colors and modifiers
 //! - Component trait for declarative UI elements
 //! - Props system for component configuration
-//! - State management with dispatch pattern
+//! - State management with dispatch pattern (native only)
 //! - Event system for input handling
 
 // Suppress pedantic lints that don't add value in this codebase
@@ -53,7 +53,8 @@
 #![allow(dead_code)]
 #![allow(clippy::derive_partial_eq_without_eq)]
 
-pub mod backend;
+// Core modules available on all targets
+pub mod backend;  // Backend trait is available, implementations may be gated
 pub mod buffer;
 pub mod cell;
 pub mod component;
@@ -63,12 +64,19 @@ pub mod packed_cell;
 pub mod props;
 pub mod render_loop;
 pub mod renderable;
-pub mod state;
 pub mod style;
 pub mod symbol_table;
-pub mod terminal;
 pub mod unicode;
 
+// Native-only modules (require tokio async runtime)
+#[cfg(not(target_arch = "wasm32"))]
+pub mod state;
+
+#[cfg(not(target_arch = "wasm32"))]
+pub mod terminal;
+
+// Re-exports for core types (all targets)
+pub use backend::{Backend, CursorConfig, CursorStyle};
 pub use buffer::Buffer;
 pub use cell::Cell;
 pub use component::{Cmd, Component, Msg};
@@ -76,11 +84,21 @@ pub use event::{Event, EventHandler, FnEventHandler, KeyCode, KeyEvent, KeyEvent
 pub use geometry::{Position, Rect, Size};
 pub use packed_cell::PackedCell;
 pub use props::{DefaultProps, Props};
-pub use state::State;
+pub use render_loop::RenderLoop;
+pub use renderable::Renderable;
 pub use style::{Color, Modifier, Style};
 pub use symbol_table::{SymbolId, SymbolTable};
-pub use terminal::{Frame, Terminal, Widget};
 pub use unicode::{display_width, UnicodeCompat};
+
+// Native-only re-exports
+#[cfg(not(target_arch = "wasm32"))]
+pub use backend::CrosstermBackend;
+
+#[cfg(not(target_arch = "wasm32"))]
+pub use state::State;
+
+#[cfg(not(target_arch = "wasm32"))]
+pub use terminal::{Frame, Terminal, Widget};
 
 // Feature-gated modules
 #[cfg(feature = "component-pool")]
