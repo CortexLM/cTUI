@@ -72,7 +72,7 @@ pub mod unicode;
 pub use buffer::Buffer;
 pub use cell::Cell;
 pub use component::{Cmd, Component, Msg};
-pub use event::{Event, EventHandler, FnEventHandler, KeyCode, KeyEvent, KeyModifiers, MouseEvent, ResizeEvent};
+pub use event::{Event, EventHandler, FnEventHandler, KeyCode, KeyEvent, KeyEventKind, KeyModifiers, MouseEvent, ResizeEvent};
 pub use geometry::{Position, Rect, Size};
 pub use packed_cell::PackedCell;
 pub use props::{DefaultProps, Props};

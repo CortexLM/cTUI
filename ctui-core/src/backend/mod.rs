@@ -335,6 +335,41 @@ pub trait Backend {
     fn disable_mouse_capture(&mut self) -> Result<()> {
         Ok(())
     }
+
+    /// Returns true if the terminal supports Kitty keyboard protocol
+    ///
+    /// Kitty keyboard protocol provides enhanced keyboard input including:
+    /// - Key event kinds (Press, Repeat, Release)
+    /// - Extended modifiers (Hyper, Meta, CapsLock, NumLock)
+    /// - Distinguishing key-up vs key-down events
+    fn supports_kitty_keyboard(&self) -> bool {
+        false
+    }
+
+    /// Enables Kitty keyboard protocol
+    ///
+    /// Sends the CSI sequence to enable enhanced keyboard reporting.
+    /// After enabling, key events will include:
+    /// - Key event kinds (Press, Repeat, Release)
+    /// - Extended modifiers
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if enabling fails.
+    fn enable_kitty_keyboard(&mut self) -> Result<()> {
+        Ok(())
+    }
+
+    /// Disables Kitty keyboard protocol
+    ///
+    /// Sends the CSI sequence to disable enhanced keyboard reporting.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if disabling fails.
+    fn disable_kitty_keyboard(&mut self) -> Result<()> {
+        Ok(())
+    }
 }
 
 pub mod test;

@@ -51,11 +51,14 @@ pub struct CrosstermBackend<W: Write> {
     last_pos: Option<Position>,
     supports_sync: bool,
     in_alternate_screen: bool,
+    supports_kitty: bool,
+    kitty_keyboard_enabled: bool,
 }
 
 impl<W: Write> CrosstermBackend<W> {
     /// Creates a new CrosstermBackend with the given writer
     pub fn new(writer: W) -> Self {
+        let supports_kitty = detect_kitty_terminal();
         Self {
             writer,
             fg: Color::default(),
@@ -64,12 +67,15 @@ impl<W: Write> CrosstermBackend<W> {
             last_pos: None,
             supports_sync: false,
             in_alternate_screen: false,
+            supports_kitty,
+            kitty_keyboard_enabled: false,
         }
     }
 
     /// Creates a new CrosstermBackend with synchronized output support detection
     pub fn with_sync_detection(writer: W) -> Self {
         let supports_sync = detect_sync_support();
+        let supports_kitty = detect_kitty_terminal();
         Self {
             writer,
             fg: Color::default(),
@@ -78,6 +84,24 @@ impl<W: Write> CrosstermBackend<W> {
             last_pos: None,
             supports_sync,
             in_alternate_screen: false,
+            supports_kitty,
+            kitty_keyboard_enabled: false,
+        }
+    }
+
+    /// Creates a new CrosstermBackend with all capability detection
+    pub fn with_capabilities(writer: W) -> Self {
+        let (supports_sync, supports_kitty) = detect_capabilities();
+        Self {
+            writer,
+            fg: Color::default(),
+            bg: Color::default(),
+            modifier: Modifier::default(),
+            last_pos: None,
+            supports_sync,
+            in_alternate_screen: false,
+            supports_kitty,
+            kitty_keyboard_enabled: false,
         }
     }
 
@@ -323,6 +347,41 @@ impl<W: Write> Backend for CrosstermBackend<W> {
         execute!(self.writer, DisableMouseCapture)?;
         Ok(())
     }
+
+    fn supports_kitty_keyboard(&self) -> bool {
+        self.supports_kitty
+    }
+
+    fn enable_kitty_keyboard(&mut self) -> Result<()> {
+        if self.supports_kitty {
+            // Kitty keyboard protocol: CSI > 1 u enables full protocol
+            write!(self.writer, "\x1b[>1u")?;
+            self.flush()?;
+            self.kitty_keyboard_enabled = true;
+        }
+        // Non-Kitty terminals: silently succeed (use standard crossterm events)
+        Ok(())
+    }
+
+    fn disable_kitty_keyboard(&mut self) -> Result<()> {
+        if self.kitty_keyboard_enabled {
+            // Kitty keyboard protocol: CSI < 1 u disables the protocol
+            write!(self.writer, "\x1b[<1u")?;
+            self.flush()?;
+            self.kitty_keyboard_enabled = false;
+        }
+        Ok(())
+    }
+}
+
+impl<W: Write> Drop for CrosstermBackend<W> {
+    fn drop(&mut self) {
+        // Ensure Kitty keyboard is disabled on drop
+        if self.kitty_keyboard_enabled {
+            let _ = write!(self.writer, "\x1b[<1u");
+            let _ = self.flush();
+        }
+    }
 }
 
 impl<W: Write> CrosstermBackend<W> {
@@ -330,8 +389,24 @@ impl<W: Write> CrosstermBackend<W> {
     pub fn writer_mut(&mut self) -> &mut W {
         &mut self.writer
     }
+
+    /// Returns true if Kitty keyboard is currently enabled
+    #[must_use]
+    pub const fn is_kitty_keyboard_enabled(&self) -> bool {
+        self.kitty_keyboard_enabled
+    }
 }
 
+/// Detect if the terminal is Kitty
+fn detect_kitty_terminal() -> bool {
+    std::env::var("KITTY_WINDOW_ID").is_ok()
+        || std::env::var("KITTY_PID").is_ok()
+        || std::env::var("TERM")
+            .map(|t| t == "xterm-kitty")
+            .unwrap_or(false)
+}
+
+/// Detect sync support
 fn detect_sync_support() -> bool {
     std::env::var("TERM")
         .map(|term| {
@@ -347,6 +422,17 @@ fn detect_sync_support() -> bool {
             )
         })
         .unwrap_or(false)
+}
+
+/// Detect all capabilities
+fn detect_capabilities() -> (bool, bool) {
+    let supports_kitty = detect_kitty_terminal();
+    let supports_sync = if supports_kitty {
+        true
+    } else {
+        detect_sync_support()
+    };
+    (supports_sync, supports_kitty)
 }
 
 #[cfg(test)]
@@ -386,5 +472,47 @@ mod tests {
     fn test_backend_creation() {
         let backend = CrosstermBackend::new(Vec::new());
         assert!(!backend.supports_synchronized_output());
+        // Kitty detection depends on environment
+        let _ = backend.supports_kitty_keyboard();
+    }
+
+    #[test]
+    fn test_backend_with_capabilities() {
+        let backend = CrosstermBackend::with_capabilities(Vec::new());
+        // Capability detection depends on environment
+        let _ = backend.supports_synchronized_output();
+        let _ = backend.supports_kitty_keyboard();
+    }
+
+    #[test]
+    fn test_kitty_keyboard_enable_disable() {
+        let mut backend = CrosstermBackend::new(Vec::new());
+        
+        // Should succeed even on non-Kitty terminals
+        assert!(backend.enable_kitty_keyboard().is_ok());
+        
+        // Should track state
+        if backend.supports_kitty_keyboard() {
+            assert!(backend.is_kitty_keyboard_enabled());
+        }
+        
+        // Disable should work
+        assert!(backend.disable_kitty_keyboard().is_ok());
+        assert!(!backend.is_kitty_keyboard_enabled());
+    }
+
+    #[test]
+    fn test_detect_kitty_terminal() {
+        // Just ensure it doesn't panic
+        let _ = detect_kitty_terminal();
+    }
+
+    #[test]
+    fn test_detect_capabilities() {
+        let (sync, kitty) = detect_capabilities();
+        // If Kitty terminal, both should be true
+        if kitty {
+            assert!(sync);
+        }
     }
 }

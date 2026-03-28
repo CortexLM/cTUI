@@ -2,8 +2,53 @@
 //!
 //! This module provides types and traits for handling terminal events including
 //! keyboard input, mouse events, resize events, and focus events.
+//!
+//! ## Kitty Keyboard Protocol Support
+//!
+//! This module supports the Kitty keyboard protocol for enhanced keyboard input:
+//! - Key event kinds (Press, Repeat, Release)
+//! - Extended modifiers (Hyper, Meta, CapsLock, NumLock)
+//! - Distinguishing key-up vs key-down events
+//!
+//! Reference: <https://sw.kovidgoyal.net/kitty/keyboard-protocol/>
 
 use std::fmt;
+
+/// Represents the kind of key event (Kitty keyboard protocol)
+///
+/// The Kitty keyboard protocol can distinguish between different key event
+/// states, allowing applications to respond differently to press, repeat,
+/// and release events.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+pub enum KeyEventKind {
+    /// Key was pressed down
+    #[default]
+    Press,
+    /// Key is being held down (auto-repeat)
+    Repeat,
+    /// Key was released
+    Release,
+}
+
+impl KeyEventKind {
+    /// Returns true if this is a press event
+    #[must_use]
+    pub const fn is_press(&self) -> bool {
+        matches!(self, Self::Press)
+    }
+
+    /// Returns true if this is a repeat event
+    #[must_use]
+    pub const fn is_repeat(&self) -> bool {
+        matches!(self, Self::Repeat)
+    }
+
+    /// Returns true if this is a release event
+    #[must_use]
+    pub const fn is_release(&self) -> bool {
+        matches!(self, Self::Release)
+    }
+}
 
 /// Represents a key code for keyboard events.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -45,6 +90,10 @@ pub enum KeyCode {
 }
 
 /// Represents key modifiers (Shift, Ctrl, Alt, etc.)
+///
+/// This struct supports both standard modifiers (Shift, Ctrl, Alt, Super)
+/// and extended modifiers from the Kitty keyboard protocol (Hyper, Meta,
+/// CapsLock state, NumLock state).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 #[must_use]
 pub struct KeyModifiers {
@@ -56,6 +105,14 @@ pub struct KeyModifiers {
     pub alt: bool,
     /// Super/Windows/Command key is pressed
     pub super_key: bool,
+    /// Hyper modifier (Kitty protocol extension)
+    pub hyper: bool,
+    /// Meta modifier (Kitty protocol extension, distinct from Alt)
+    pub meta: bool,
+    /// Caps Lock state (Kitty protocol extension)
+    pub caps_lock: bool,
+    /// Num Lock state (Kitty protocol extension)
+    pub num_lock: bool,
 }
 
 impl KeyModifiers {
@@ -67,6 +124,10 @@ impl KeyModifiers {
             ctrl: false,
             alt: false,
             super_key: false,
+            hyper: false,
+            meta: false,
+            caps_lock: false,
+            num_lock: false,
         }
     }
 
@@ -74,6 +135,13 @@ impl KeyModifiers {
     #[must_use]
     pub const fn is_empty(&self) -> bool {
         !self.shift && !self.ctrl && !self.alt && !self.super_key
+            && !self.hyper && !self.meta && !self.caps_lock && !self.num_lock
+    }
+
+    /// Returns true if only standard modifiers are set (no Kitty extensions)
+    #[must_use]
+    pub const fn is_standard_only(&self) -> bool {
+        !self.hyper && !self.meta && !self.caps_lock && !self.num_lock
     }
 
     /// Adds the shift modifier.
@@ -96,6 +164,41 @@ impl KeyModifiers {
         self.alt = true;
         self
     }
+
+    /// Adds the super modifier.
+    #[must_use]
+    pub const fn with_super(mut self) -> Self {
+        self.super_key = true;
+        self
+    }
+
+    /// Adds the hyper modifier (Kitty protocol).
+    #[must_use]
+    pub const fn with_hyper(mut self) -> Self {
+        self.hyper = true;
+        self
+    }
+
+    /// Adds the meta modifier (Kitty protocol).
+    #[must_use]
+    pub const fn with_meta(mut self) -> Self {
+        self.meta = true;
+        self
+    }
+
+    /// Sets caps lock state (Kitty protocol).
+    #[must_use]
+    pub const fn with_caps_lock(mut self) -> Self {
+        self.caps_lock = true;
+        self
+    }
+
+    /// Sets num lock state (Kitty protocol).
+    #[must_use]
+    pub const fn with_num_lock(mut self) -> Self {
+        self.num_lock = true;
+        self
+    }
 }
 
 /// A keyboard event
@@ -105,17 +208,47 @@ pub struct KeyEvent {
     pub code: KeyCode,
     /// Any modifiers that were active
     pub modifiers: KeyModifiers,
+    /// The kind of key event (Press, Repeat, Release)
+    pub kind: KeyEventKind,
 }
 
 impl KeyEvent {
     #[must_use]
     pub const fn new(code: KeyCode, modifiers: KeyModifiers) -> Self {
-        Self { code, modifiers }
+        Self { 
+            code, 
+            modifiers, 
+            kind: KeyEventKind::Press,
+        }
+    }
+
+    /// Creates a KeyEvent with a specific kind
+    #[must_use]
+    pub const fn with_kind(code: KeyCode, modifiers: KeyModifiers, kind: KeyEventKind) -> Self {
+        Self { code, modifiers, kind }
     }
 
     #[must_use]
     pub const fn from(code: KeyCode) -> Self {
         Self::new(code, KeyModifiers::new())
+    }
+
+    /// Returns true if this is a press event
+    #[must_use]
+    pub const fn is_press(&self) -> bool {
+        self.kind.is_press()
+    }
+
+    /// Returns true if this is a repeat event
+    #[must_use]
+    pub const fn is_repeat(&self) -> bool {
+        self.kind.is_repeat()
+    }
+
+    /// Returns true if this is a release event
+    #[must_use]
+    pub const fn is_release(&self) -> bool {
+        self.kind.is_release()
     }
 }
 
@@ -280,6 +413,16 @@ impl fmt::Display for KeyCode {
     }
 }
 
+impl fmt::Display for KeyEventKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Press => write!(f, "Press"),
+            Self::Repeat => write!(f, "Repeat"),
+            Self::Release => write!(f, "Release"),
+        }
+    }
+}
+
 /// Trait for handling events.
 ///
 /// Implement this trait to receive events from the terminal.
@@ -306,6 +449,9 @@ impl<F: FnMut(&Event) -> bool> EventHandler for FnEventHandler<F> {
 /// async iterator for events.
 #[cfg(feature = "event-stream")]
 pub use crossterm::event::EventStream;
+
+/// Kitty keyboard protocol parser module.
+pub mod kitty;
 
 #[cfg(feature = "event-stream")]
 impl From<crossterm::event::Event> for Event {
@@ -343,8 +489,18 @@ impl From<crossterm::event::Event> for Event {
                     super_key: key
                         .modifiers
                         .contains(crossterm::event::KeyModifiers::SUPER),
+                    hyper: false,
+                    meta: false,
+                    caps_lock: false,
+                    num_lock: false,
                 };
-                Event::Key(KeyEvent::new(code, modifiers))
+                let kind = match key.kind {
+                    crossterm::event::KeyEventKind::Press => KeyEventKind::Press,
+                    crossterm::event::KeyEventKind::Repeat => KeyEventKind::Repeat,
+                    crossterm::event::KeyEventKind::Release => KeyEventKind::Release,
+                    _ => KeyEventKind::Press,
+                };
+                Event::Key(KeyEvent::with_kind(code, modifiers, kind))
             }
             crossterm::event::Event::Mouse(mouse) => {
                 let button = match mouse.kind {
@@ -380,6 +536,10 @@ impl From<crossterm::event::Event> for Event {
                     super_key: mouse
                         .modifiers
                         .contains(crossterm::event::KeyModifiers::SUPER),
+                    hyper: false,
+                    meta: false,
+                    caps_lock: false,
+                    num_lock: false,
                 };
                 Event::Mouse(MouseEvent::new(mouse.column, mouse.row, button, modifiers))
             }
@@ -417,10 +577,49 @@ mod tests {
     }
 
     #[test]
+    fn test_key_event_kind() {
+        assert!(KeyEventKind::Press.is_press());
+        assert!(!KeyEventKind::Press.is_repeat());
+        assert!(!KeyEventKind::Press.is_release());
+
+        assert!(!KeyEventKind::Repeat.is_press());
+        assert!(KeyEventKind::Repeat.is_repeat());
+        assert!(!KeyEventKind::Repeat.is_release());
+
+        assert!(!KeyEventKind::Release.is_press());
+        assert!(!KeyEventKind::Release.is_repeat());
+        assert!(KeyEventKind::Release.is_release());
+
+        assert_eq!(KeyEventKind::default(), KeyEventKind::Press);
+    }
+
+    #[test]
+    fn test_key_event_kind_display() {
+        assert_eq!(KeyEventKind::Press.to_string(), "Press");
+        assert_eq!(KeyEventKind::Repeat.to_string(), "Repeat");
+        assert_eq!(KeyEventKind::Release.to_string(), "Release");
+    }
+
+    #[test]
     fn test_key_modifiers_empty() {
         let mods = KeyModifiers::new();
         assert!(mods.is_empty());
         assert!(!mods.with_shift().is_empty());
+    }
+
+    #[test]
+    fn test_key_modifiers_extended() {
+        let mods = KeyModifiers::new()
+            .with_hyper()
+            .with_meta()
+            .with_caps_lock()
+            .with_num_lock();
+        
+        assert!(mods.hyper);
+        assert!(mods.meta);
+        assert!(mods.caps_lock);
+        assert!(mods.num_lock);
+        assert!(!mods.is_standard_only());
     }
 
     #[test]
@@ -437,6 +636,18 @@ mod tests {
         let event = KeyEvent::new(KeyCode::Char('x'), KeyModifiers::new().with_ctrl());
         assert_eq!(event.code, KeyCode::Char('x'));
         assert!(event.modifiers.ctrl);
+        assert_eq!(event.kind, KeyEventKind::Press);
+    }
+
+    #[test]
+    fn test_key_event_with_kind() {
+        let event = KeyEvent::with_kind(
+            KeyCode::Char('a'),
+            KeyModifiers::new(),
+            KeyEventKind::Release,
+        );
+        assert!(event.is_release());
+        assert!(!event.is_press());
     }
 
     #[test]
