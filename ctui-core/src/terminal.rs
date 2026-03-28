@@ -116,9 +116,23 @@ impl LayoutCache {
 }
 
 /// A widget that can be rendered to a frame
+///
+/// # Z-Index
+///
+/// Widgets support z-index layering for render ordering. Higher z-index values
+/// are rendered on top of lower values. The default z-index is 0.
 pub trait Widget {
     /// Renders the widget to the given buffer within the specified area
     fn render(self, area: Rect, buffer: &mut Buffer);
+
+    /// Returns the z-index for layer order during rendering.
+    ///
+    /// Higher values are rendered on top of lower values.
+    /// Default is 0 (bottom layer).
+    #[inline]
+    fn z_index(&self) -> i32 {
+        0
+    }
 }
 
 /// A terminal instance that manages rendering state with double buffering
