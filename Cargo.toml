@@ -53,6 +53,10 @@ version = "0.1.0"
 edition = "2021"
 publish = false
 
+[features]
+default = []
+component-pool = ["ctui-core/component-pool"]
+
 [dependencies]
 ctui-core = { path = "ctui-core" }
 ctui-components = { path = "ctui-components" }
@@ -75,6 +79,11 @@ harness = false
 [[bench]]
 name = "buffer_memory"
 harness = false
+
+[[bench]]
+name = "message_dispatch"
+harness = false
+required-features = ["component-pool"]
 
 [[example]]
 name = "counter"
