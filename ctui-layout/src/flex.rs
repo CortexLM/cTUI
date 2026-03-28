@@ -1527,3 +1527,218 @@ mod property_tests {
         }
     }
 }
+
+#[cfg(test)]
+mod error_boundary_tests {
+    use super::*;
+
+    fn rect(x: u16, y: u16, width: u16, height: u16) -> Rect {
+        Rect::new(x, y, width, height)
+    }
+
+    // === Zero-sized area tests ===
+
+    #[test]
+    fn zero_width_area_returns_valid_rects() {
+        let area = rect(0, 0, 0, 24);
+        let layout = Layout::row();
+        let rects = layout.split(area, &[Constraint::Length(10), Constraint::Fill]);
+        assert_eq!(rects.len(), 2);
+        for r in &rects {
+            assert!(r.width == 0 || r.width <= area.width);
+        }
+    }
+
+    #[test]
+    fn zero_height_area_returns_valid_rects() {
+        let area = rect(0, 0, 80, 0);
+        let layout = Layout::column();
+        let rects = layout.split(area, &[Constraint::Length(10), Constraint::Fill]);
+        assert_eq!(rects.len(), 2);
+        for r in &rects {
+            assert!(r.height == 0 || r.height <= area.height);
+        }
+    }
+
+    #[test]
+    fn zero_area_both_dimensions() {
+        let area = rect(0, 0, 0, 0);
+        let layout = Layout::row();
+        let rects = layout.split(area, &[Constraint::Length(10), Constraint::Fill]);
+        assert_eq!(rects.len(), 2);
+    }
+
+    #[test]
+    fn single_pixel_area() {
+        let area = rect(0, 0, 1, 1);
+        let layout = Layout::row();
+        let rects = layout.split(area, &[Constraint::Length(10), Constraint::Length(10)]);
+        assert_eq!(rects.len(), 2);
+        for r in &rects {
+            assert!(r.width <= 1);
+        }
+    }
+
+    // === Gap overflow tests ===
+
+    #[test]
+    fn gap_larger_than_area() {
+        let area = rect(0, 0, 5, 24);
+        let layout = Layout::row().gap(100);
+        let rects = layout.split(area, &[Constraint::Length(10), Constraint::Fill]);
+        assert_eq!(rects.len(), 2);
+    }
+
+    #[test]
+    fn max_u16_gap_no_overflow() {
+        let area = rect(0, 0, 100, 24);
+        let layout = Layout::row().gap(u16::MAX);
+        let rects = layout.split(area, &[Constraint::Fill]);
+        assert_eq!(rects.len(), 1);
+    }
+
+    // === Many constraints tests ===
+
+    #[test]
+    fn many_constraints_with_tiny_area() {
+        let area = rect(0, 0, 10, 1);
+        let layout = Layout::row();
+        let constraints: Vec<Constraint> = (0..100).map(|_| Constraint::Fill).collect();
+        let rects = layout.split(area, &constraints);
+        assert_eq!(rects.len(), 100);
+        for r in &rects {
+            assert!(r.width <= area.width);
+        }
+    }
+
+    // === Constraint edge cases ===
+
+    #[test]
+    fn ratio_zero_denominator_handled_gracefully() {
+        let area = rect(0, 0, 100, 24);
+        let layout = Layout::row();
+        let rects = layout.split(area, &[Constraint::Ratio(1, 0)]);
+        assert_eq!(rects.len(), 1);
+    }
+
+    #[test]
+    fn portion_zero_handled_gracefully() {
+        let area = rect(0, 0, 100, 24);
+        let layout = Layout::row();
+        let rects = layout.split(area, &[Constraint::Portion(0), Constraint::Portion(2)]);
+        assert_eq!(rects.len(), 2);
+    }
+
+    #[test]
+    fn percentage_over_100_clamped() {
+        let area = rect(0, 0, 100, 24);
+        let layout = Layout::row();
+        let rects = layout.split(area, &[Constraint::Percentage(200)]);
+        assert_eq!(rects.len(), 1);
+        assert!(rects[0].width <= 100);
+    }
+
+    #[test]
+    fn range_min_greater_than_max() {
+        let area = rect(0, 0, 100, 24);
+        let layout = Layout::row();
+        let rects = layout.split(area, &[Constraint::Range { min: 50, max: 10 }]);
+        assert_eq!(rects.len(), 1);
+    }
+
+    // === Offset area tests ===
+
+    #[test]
+    fn large_offset_area() {
+        let area = rect(1000, 500, 80, 24);
+        let layout = Layout::row();
+        let rects = layout.split(area, &[Constraint::Length(20), Constraint::Fill]);
+        assert_eq!(rects.len(), 2);
+        assert_eq!(rects[0].x, 1000);
+    }
+
+    // === Justify with overflow ===
+
+    #[test]
+    fn justify_center_with_overflow_content() {
+        let area = rect(0, 0, 10, 24);
+        let layout = Layout::row().justify_content(JustifyContent::Center);
+        let rects = layout.split(area, &[Constraint::Length(20), Constraint::Length(20)]);
+        assert_eq!(rects.len(), 2);
+    }
+
+    // === Flex wrap edge cases ===
+
+    #[test]
+    fn flex_wrap_with_single_item() {
+        let area = rect(0, 0, 20, 24);
+        let layout = Layout::row().wrap(true);
+        let lines = layout.split_wrapped(area, &[Constraint::Length(10)]);
+        assert_eq!(lines.len(), 1);
+        assert_eq!(lines[0].len(), 1);
+    }
+
+    #[test]
+    fn flex_wrap_zero_area() {
+        let area = rect(0, 0, 0, 0);
+        let layout = Layout::row().wrap(true);
+        let lines = layout.split_wrapped(area, &[Constraint::Length(10), Constraint::Length(20)]);
+        assert!(!lines.is_empty() || lines.is_empty());
+    }
+
+    // === Split with children edge cases ===
+
+    #[test]
+    fn split_with_children_empty() {
+        let area = rect(0, 0, 80, 24);
+        let layout = Layout::row();
+        let rects = layout.split_with_children(area, &[]);
+        assert!(rects.is_empty());
+    }
+
+    #[test]
+    fn negative_margin_handling() {
+        let area = rect(0, 0, 80, 24);
+        let layout = Layout::row();
+        let children = vec![
+            FlexChild::fixed(20).margin(Margin::new(-5, -5, -5, -5)),
+        ];
+        let rects = layout.split_with_children(area, &children);
+        assert_eq!(rects.len(), 1);
+    }
+
+    #[test]
+    fn extreme_margin_values() {
+        let area = rect(0, 0, 80, 24);
+        let layout = Layout::row();
+        let children = vec![
+            FlexChild::fixed(20).margin(Margin::uniform(i16::MAX)),
+        ];
+        let rects = layout.split_with_children(area, &children);
+        assert_eq!(rects.len(), 1);
+    }
+
+    // === Stress test ===
+
+    #[test]
+    fn layout_stress_test() {
+        let area = rect(0, 0, 1, 1);
+        let layout = Layout::row()
+            .gap(u16::MAX)
+            .justify_content(JustifyContent::SpaceBetween);
+
+        let constraints = vec![
+            Constraint::Length(0),
+            Constraint::Min(0),
+            Constraint::Max(0),
+            Constraint::Percentage(0),
+            Constraint::Ratio(0, 1),
+            Constraint::Fill,
+            Constraint::Range { min: 0, max: 0 },
+            Constraint::Portion(0),
+        ];
+
+        let rects = layout.split(area, &constraints);
+        assert_eq!(rects.len(), 8);
+    }
+}

@@ -512,4 +512,48 @@ mod tests {
         buf.set(0, 0, cell);
         assert!(!buf.get(0, 0).unwrap().skip);
     }
+
+    // ============== Panic Tests ==============
+
+    /// Test that Index trait panics with expected message
+    /// The Index implementation always panics because buffer access should use .get()/.set()
+    #[test]
+    #[should_panic(expected = "Use .get(x, y) or .set(x, y, cell) instead")]
+    fn test_index_trait_panics() {
+        let buf = Buffer::empty(Rect::new(0, 0, 10, 10));
+        let _ = &buf[(5, 5)];
+    }
+
+    /// Test that index_of panics when x coordinate exceeds buffer bounds
+    #[test]
+    #[should_panic(expected = "Attempt to access cell outside buffer")]
+    fn test_index_of_x_out_of_bounds() {
+        let buf = Buffer::empty(Rect::new(0, 0, 10, 10));
+        buf.index_of(15, 5);
+    }
+
+    /// Test that index_of panics when y coordinate exceeds buffer bounds
+    #[test]
+    #[should_panic(expected = "Attempt to access cell outside buffer")]
+    fn test_index_of_y_out_of_bounds() {
+        let buf = Buffer::empty(Rect::new(0, 0, 10, 10));
+        buf.index_of(5, 12);
+    }
+
+    /// Test that index_of panics for coordinates before buffer origin
+    #[test]
+    #[should_panic(expected = "Attempt to access cell outside buffer")]
+    fn test_index_of_before_origin() {
+        let buf = Buffer::empty(Rect::new(5, 5, 10, 10));
+        buf.index_of(3, 5);
+    }
+
+    /// Test that diff panics when buffer areas don't match
+    #[test]
+    #[should_panic(expected = "Buffer areas must match")]
+    fn test_diff_mismatched_areas() {
+        let buf1 = Buffer::empty(Rect::new(0, 0, 10, 10));
+        let buf2 = Buffer::empty(Rect::new(0, 0, 20, 20));
+        buf1.diff(&buf2);
+    }
 }

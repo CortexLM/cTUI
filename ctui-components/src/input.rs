@@ -990,4 +990,299 @@ mod tests {
         assert_eq!(input.get_value(), "abc");
         assert_eq!(input.cursor(), 2);
     }
+
+    // ============================================
+    // Additional event handler tests (T18)
+    // ============================================
+
+    #[test]
+    fn test_arrow_up_no_op() {
+        // Arrow Up should do nothing on single-line input
+        let mut input = Input::new().value("hello");
+        input.set_cursor(2);
+        let old_cursor = input.cursor();
+
+        input.handle_key(make_key(KeyCode::Up));
+        assert_eq!(input.cursor(), old_cursor);
+        assert_eq!(input.get_value(), "hello");
+    }
+
+    #[test]
+    fn test_arrow_down_no_op() {
+        // Arrow Down should do nothing on single-line input
+        let mut input = Input::new().value("hello");
+        input.set_cursor(2);
+        let old_cursor = input.cursor();
+
+        input.handle_key(make_key(KeyCode::Down));
+        assert_eq!(input.cursor(), old_cursor);
+        assert_eq!(input.get_value(), "hello");
+    }
+
+    #[test]
+    fn test_ctrl_u_at_start_no_change() {
+        // Ctrl+U at cursor position 0 should do nothing
+        let mut input = Input::new().value("hello");
+        input.set_cursor(0);
+
+        input.handle_key(make_ctrl_key(KeyCode::Char('u')));
+        assert_eq!(input.get_value(), "hello");
+        assert_eq!(input.cursor(), 0);
+    }
+
+    #[test]
+    fn test_ctrl_k_at_end_no_change() {
+        // Ctrl+K at end of text should do nothing
+        let mut input = Input::new().value("hello");
+        input.set_cursor(5); // At end
+
+        input.handle_key(make_ctrl_key(KeyCode::Char('k')));
+        assert_eq!(input.get_value(), "hello");
+        assert_eq!(input.cursor(), 5);
+    }
+
+    #[test]
+    fn test_ctrl_a_already_at_start() {
+        // Ctrl+A when already at start should be idempotent
+        let mut input = Input::new().value("hello");
+        input.set_cursor(0);
+
+        input.handle_key(make_ctrl_key(KeyCode::Char('a')));
+        assert_eq!(input.cursor(), 0);
+        assert_eq!(input.get_value(), "hello");
+    }
+
+    #[test]
+    fn test_ctrl_e_already_at_end() {
+        // Ctrl+E when already at end should be idempotent
+        let mut input = Input::new().value("hello");
+        input.set_cursor(5);
+
+        input.handle_key(make_ctrl_key(KeyCode::Char('e')));
+        assert_eq!(input.cursor(), 5);
+        assert_eq!(input.get_value(), "hello");
+    }
+
+    #[test]
+    fn test_insert_key_toggle_multiple() {
+        // Insert key should toggle mode multiple times
+        let mut input = Input::new().value("abc");
+        assert!(input.is_insert_mode()); // default is insert
+
+        input.handle_key(make_key(KeyCode::Insert));
+        assert!(!input.is_insert_mode()); // now replace
+
+        input.handle_key(make_key(KeyCode::Insert));
+        assert!(input.is_insert_mode()); // back to insert
+
+        input.handle_key(make_key(KeyCode::Insert));
+        assert!(!input.is_insert_mode()); // back to replace
+    }
+
+    #[test]
+    fn test_insert_mode_replace_behavior() {
+        // In replace mode, typing should replace the character at cursor
+        let mut input = Input::new().value("xxxxx");
+        input.set_cursor(0);
+        input.insert_mode = false; // Replace mode
+
+        input.handle_key(make_key(KeyCode::Char('a')));
+        assert_eq!(input.get_value(), "axxxx");
+        assert_eq!(input.cursor(), 1);
+
+        input.handle_key(make_key(KeyCode::Char('b')));
+        assert_eq!(input.get_value(), "abxxx");
+        assert_eq!(input.cursor(), 2);
+    }
+
+    #[test]
+    fn test_insert_mode_replace_at_end() {
+        // In replace mode at end, should append like insert mode
+        let mut input = Input::new().value("abc");
+        input.set_cursor(3); // At end
+        input.insert_mode = false;
+
+        input.handle_key(make_key(KeyCode::Char('d')));
+        assert_eq!(input.get_value(), "abcd");
+        assert_eq!(input.cursor(), 4);
+    }
+
+    #[test]
+    fn test_alt_left_at_start() {
+        // Alt+Left at position 0 should do nothing
+        let mut input = Input::new().value("hello world");
+        input.set_cursor(0);
+
+        input.handle_key(KeyEvent::new(KeyCode::Left, KeyModifiers::ALT));
+        assert_eq!(input.cursor(), 0);
+    }
+
+    #[test]
+    fn test_alt_right_at_end() {
+        // Alt+Right at end should do nothing
+        let mut input = Input::new().value("hello");
+        input.set_cursor(5); // At end
+
+        input.handle_key(KeyEvent::new(KeyCode::Right, KeyModifiers::ALT));
+        assert_eq!(input.cursor(), 5);
+    }
+
+    #[test]
+    fn test_unicode_backspace() {
+        // Backspace should correctly delete unicode characters
+        let mut input = Input::new().value("日本語");
+        input.set_cursor(3);
+
+        input.handle_key(make_key(KeyCode::Backspace));
+        assert_eq!(input.get_value(), "日本");
+        assert_eq!(input.cursor(), 2);
+    }
+
+    #[test]
+    fn test_unicode_delete() {
+        // Delete should correctly delete unicode characters
+        let mut input = Input::new().value("日本語");
+        input.set_cursor(0);
+
+        input.handle_key(make_key(KeyCode::Delete));
+        assert_eq!(input.get_value(), "本語");
+        assert_eq!(input.cursor(), 0);
+    }
+
+    #[test]
+    fn test_multiple_ctrl_u() {
+        // Multiple Ctrl+U calls should eventually clear all
+        let mut input = Input::new().value("hello world test");
+        input.set_cursor(10);
+
+        input.handle_key(make_ctrl_key(KeyCode::Char('u')));
+        // Should clear to start
+        assert_eq!(input.cursor(), 0);
+    }
+
+    #[test]
+    fn test_multiple_ctrl_k() {
+        // Multiple Ctrl+K calls: first clears to end, subsequent no-ops
+        let mut input = Input::new().value("hello world");
+        input.set_cursor(5);
+
+        input.handle_key(make_ctrl_key(KeyCode::Char('k')));
+        assert_eq!(input.get_value(), "hello");
+
+        // Second Ctrl+K should do nothing (already at end)
+        input.handle_key(make_ctrl_key(KeyCode::Char('k')));
+        assert_eq!(input.get_value(), "hello");
+    }
+
+    #[test]
+    fn test_backspace_after_left_navigation() {
+        // Navigate left then backspace
+        let mut input = Input::new().value("abcdef");
+        input.set_cursor(5); // At 'f'
+
+        input.handle_key(make_key(KeyCode::Left)); // At 'e'
+        input.handle_key(make_key(KeyCode::Left)); // At 'd'
+        input.handle_key(make_key(KeyCode::Backspace));
+
+        // cursor at 3, backspace deletes char at position 2 ('c')
+        assert_eq!(input.get_value(), "abdef");
+        assert_eq!(input.cursor(), 2);
+    }
+
+    #[test]
+    fn test_delete_after_left_navigation() {
+        // Navigate left then delete
+        let mut input = Input::new().value("abcdef");
+        input.set_cursor(5); // At 'f'
+
+        input.handle_key(make_key(KeyCode::Left)); // At 'e'
+        input.handle_key(make_key(KeyCode::Delete)); // Deletes 'e'
+
+        assert_eq!(input.get_value(), "abcdf");
+        assert_eq!(input.cursor(), 4);
+    }
+
+    #[test]
+    fn test_home_after_typing() {
+        // Type some characters then press Home
+        let mut input = Input::new();
+        input.handle_key(make_key(KeyCode::Char('a')));
+        input.handle_key(make_key(KeyCode::Char('b')));
+        input.handle_key(make_key(KeyCode::Char('c')));
+
+        input.handle_key(make_key(KeyCode::Home));
+        assert_eq!(input.cursor(), 0);
+        assert_eq!(input.get_value(), "abc");
+    }
+
+    #[test]
+    fn test_end_after_cursor_move() {
+        // Move cursor then press End
+        let mut input = Input::new().value("testing");
+        input.set_cursor(0);
+
+        input.handle_key(make_key(KeyCode::End));
+        assert_eq!(input.cursor(), 7);
+    }
+
+    #[test]
+    fn test_ctrl_w_multiple_words() {
+        // Ctrl+W multiple times should delete words backward
+        let mut input = Input::new().value("one two three");
+        input.set_cursor(13); // At end
+
+        input.handle_key(make_ctrl_key(KeyCode::Char('w')));
+        assert_eq!(input.get_value(), "one two ");
+        assert_eq!(input.cursor(), 8);
+
+        input.handle_key(make_ctrl_key(KeyCode::Char('w')));
+        assert_eq!(input.get_value(), "one ");
+        assert_eq!(input.cursor(), 4);
+
+        input.handle_key(make_ctrl_key(KeyCode::Char('w')));
+        assert_eq!(input.get_value(), "");
+        assert_eq!(input.cursor(), 0);
+    }
+
+    #[test]
+    fn test_no_change_no_message() {
+        // Keys that don't change value shouldn't emit InputChanged
+        let mut input = Input::new().value("test");
+        input.set_cursor(2);
+
+        // Left doesn't change value
+        let messages = input.handle_key(make_key(KeyCode::Left));
+        let changed_msgs: Vec<_> = messages
+            .iter()
+            .filter(|m| m.is::<messages::InputChanged>())
+            .collect();
+        assert!(changed_msgs.is_empty());
+    }
+
+    #[test]
+    fn test_change_message_after_ctrl_k() {
+        // Ctrl+K should emit change message since it modifies value
+        let mut input = Input::new().value("hello world");
+        input.set_cursor(5);
+
+        let messages = input.handle_key(make_ctrl_key(KeyCode::Char('k')));
+        assert!(messages.iter().any(|m| m.is::<messages::InputChanged>()));
+        // Verify the changed value
+        let changed = messages
+            .iter()
+            .find_map(|m| m.downcast_ref::<messages::InputChanged>());
+        assert!(changed.is_some());
+        assert_eq!(changed.unwrap().value, "hello");
+    }
+
+    #[test]
+    fn test_ctrl_w_at_start_no_change() {
+        // Ctrl+W at cursor position 0 should do nothing
+        let mut input = Input::new().value("hello");
+        input.set_cursor(0);
+
+        input.handle_key(make_ctrl_key(KeyCode::Char('w')));
+        assert_eq!(input.get_value(), "hello");
+        assert_eq!(input.cursor(), 0);
+    }
 }

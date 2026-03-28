@@ -264,3 +264,75 @@ mod tests {
         assert!(result.is_ok());
     }
 }
+
+    // =========================================================================
+    // EDGE CASE UNIT TESTS - Error handling
+    // =========================================================================
+
+    #[test]
+    fn test_error_on_tuple_struct() {
+        let input: DeriveInput = parse_quote! {
+            struct Tuple(i32, String);
+        };
+
+        let result = impl_component(&input);
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        let err_str = err.to_string();
+        assert!(err_str.contains("only supports structs with named fields"));
+    }
+
+    #[test]
+    fn test_error_on_unit_struct() {
+        let input: DeriveInput = parse_quote! {
+            struct Unit;
+        };
+
+        let result = impl_component(&input);
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        let err_str = err.to_string();
+        assert!(err_str.contains("only supports structs with named fields"));
+    }
+
+    #[test]
+    fn test_error_on_enum() {
+        let input: DeriveInput = parse_quote! {
+            enum MyEnum {
+                A,
+                B,
+            }
+        };
+
+        let result = impl_component(&input);
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        let err_str = err.to_string();
+        assert!(err_str.contains("only supports structs"));
+    }
+
+    #[test]
+    fn test_no_fields_still_works() {
+        // Empty named struct should be supported (edge case)
+        let input: DeriveInput = parse_quote! {
+            struct Empty {}
+        };
+
+        let result = impl_component(&input);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_props_name_formatting() {
+        let input: DeriveInput = parse_quote! {
+            struct MyWidget {
+                x: i32,
+            }
+        };
+
+        let result = impl_component(&input).unwrap();
+        let result_str = result.to_string();
+
+        // Check that MyWidgetProps is generated
+        assert!(result_str.contains("MyWidgetProps"));
+    }
