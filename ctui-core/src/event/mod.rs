@@ -452,6 +452,7 @@ pub use crossterm::event::EventStream;
 
 /// Kitty keyboard protocol parser module.
 pub mod kitty;
+pub mod batcher;
 
 #[cfg(feature = "event-stream")]
 impl From<crossterm::event::Event> for Event {
