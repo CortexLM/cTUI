@@ -283,4 +283,503 @@ mod tests {
             _ => panic!("Expected Mouse event"),
         }
     }
+
+    // ===========================================
+    // KeyCode Tests
+    // ===========================================
+
+    #[test]
+    fn test_keycode_letter_keys() {
+        // Test that KeyCode::Char can represent all letter keys
+        assert!(matches!(KeyCode::Char('a'), KeyCode::Char('a')));
+        assert!(matches!(KeyCode::Char('b'), KeyCode::Char('b')));
+        assert!(matches!(KeyCode::Char('z'), KeyCode::Char('z')));
+        assert!(matches!(KeyCode::Char('A'), KeyCode::Char('A')));
+        assert!(matches!(KeyCode::Char('Z'), KeyCode::Char('Z')));
+    }
+
+    #[test]
+    fn test_keycode_number_keys() {
+        // Test that KeyCode::Char can represent all number keys
+        assert!(matches!(KeyCode::Char('0'), KeyCode::Char('0')));
+        assert!(matches!(KeyCode::Char('5'), KeyCode::Char('5')));
+        assert!(matches!(KeyCode::Char('9'), KeyCode::Char('9')));
+    }
+
+    #[test]
+    fn test_keycode_symbol_keys() {
+        // Test that KeyCode::Char can represent symbol keys
+        assert!(matches!(KeyCode::Char(' '), KeyCode::Char(' ')));
+        assert!(matches!(KeyCode::Char('!'), KeyCode::Char('!')));
+        assert!(matches!(KeyCode::Char('@'), KeyCode::Char('@')));
+        assert!(matches!(KeyCode::Char('#'), KeyCode::Char('#')));
+        assert!(matches!(KeyCode::Char('$'), KeyCode::Char('$')));
+        assert!(matches!(KeyCode::Char('%'), KeyCode::Char('%')));
+        assert!(matches!(KeyCode::Char('^'), KeyCode::Char('^')));
+        assert!(matches!(KeyCode::Char('&'), KeyCode::Char('&')));
+        assert!(matches!(KeyCode::Char('*'), KeyCode::Char('*')));
+        assert!(matches!(KeyCode::Char('('), KeyCode::Char('(')));
+    }
+
+    #[test]
+    fn test_keycode_function_keys_f1_to_f12() {
+        // Test all function keys F1-F12
+        assert!(matches!(KeyCode::F(1), KeyCode::F(1)));
+        assert!(matches!(KeyCode::F(2), KeyCode::F(2)));
+        assert!(matches!(KeyCode::F(3), KeyCode::F(3)));
+        assert!(matches!(KeyCode::F(4), KeyCode::F(4)));
+        assert!(matches!(KeyCode::F(5), KeyCode::F(5)));
+        assert!(matches!(KeyCode::F(6), KeyCode::F(6)));
+        assert!(matches!(KeyCode::F(7), KeyCode::F(7)));
+        assert!(matches!(KeyCode::F(8), KeyCode::F(8)));
+        assert!(matches!(KeyCode::F(9), KeyCode::F(9)));
+        assert!(matches!(KeyCode::F(10), KeyCode::F(10)));
+        assert!(matches!(KeyCode::F(11), KeyCode::F(11)));
+        assert!(matches!(KeyCode::F(12), KeyCode::F(12)));
+    }
+
+    #[test]
+    fn test_keycode_arrow_keys() {
+        // Test arrow key codes
+        assert!(matches!(KeyCode::Up, KeyCode::Up));
+        assert!(matches!(KeyCode::Down, KeyCode::Down));
+        assert!(matches!(KeyCode::Left, KeyCode::Left));
+        assert!(matches!(KeyCode::Right, KeyCode::Right));
+    }
+
+    #[test]
+    fn test_keycode_navigation_keys() {
+        // Test navigation keys: Home, End, PageUp, PageDown
+        assert!(matches!(KeyCode::Home, KeyCode::Home));
+        assert!(matches!(KeyCode::End, KeyCode::End));
+        assert!(matches!(KeyCode::PageUp, KeyCode::PageUp));
+        assert!(matches!(KeyCode::PageDown, KeyCode::PageDown));
+    }
+
+    #[test]
+    fn test_keycode_editing_keys() {
+        // Test editing keys: Insert, Delete, Backspace
+        assert!(matches!(KeyCode::Insert, KeyCode::Insert));
+        assert!(matches!(KeyCode::Delete, KeyCode::Delete));
+        assert!(matches!(KeyCode::Backspace, KeyCode::Backspace));
+    }
+
+    #[test]
+    fn test_keycode_action_keys() {
+        // Test action keys: Enter, Tab, Esc
+        assert!(matches!(KeyCode::Enter, KeyCode::Enter));
+        assert!(matches!(KeyCode::Tab, KeyCode::Tab));
+        assert!(matches!(KeyCode::Esc, KeyCode::Esc));
+    }
+
+    #[test]
+    fn test_keycode_null() {
+        // Null represents unrecognized/missing key
+        assert!(matches!(KeyCode::Null, KeyCode::Null));
+    }
+
+    // ===========================================
+    // KeyModifiers Tests
+    // ===========================================
+
+    #[test]
+    fn test_key_modifiers_default_all_false() {
+        let mods = KeyModifiers::default();
+        assert!(!mods.shift);
+        assert!(!mods.ctrl);
+        assert!(!mods.alt);
+        assert!(!mods.super_key);
+        assert!(!mods.hyper);
+        assert!(!mods.meta);
+        assert!(!mods.caps_lock);
+        assert!(!mods.num_lock);
+    }
+
+    #[test]
+    fn test_key_modifiers_new_empty() {
+        let mods = KeyModifiers::new();
+        assert!(!mods.shift);
+        assert!(!mods.ctrl);
+        assert!(!mods.alt);
+        assert!(!mods.super_key);
+    }
+
+    #[test]
+    fn test_key_modifiers_shift_only() {
+        let mods = KeyModifiers { shift: true, ..KeyModifiers::default() };
+        assert!(mods.shift);
+        assert!(!mods.ctrl);
+        assert!(!mods.alt);
+        assert!(!mods.super_key);
+    }
+
+    #[test]
+    fn test_key_modifiers_ctrl_only() {
+        let mods = KeyModifiers { ctrl: true, ..KeyModifiers::default() };
+        assert!(!mods.shift);
+        assert!(mods.ctrl);
+        assert!(!mods.alt);
+        assert!(!mods.super_key);
+    }
+
+    #[test]
+    fn test_key_modifiers_alt_only() {
+        let mods = KeyModifiers { alt: true, ..KeyModifiers::default() };
+        assert!(!mods.shift);
+        assert!(!mods.ctrl);
+        assert!(mods.alt);
+        assert!(!mods.super_key);
+    }
+
+    #[test]
+    fn test_key_modifiers_super_key() {
+        // Meta key (super_key) is Command on macOS, Windows key on Windows
+        let mods = KeyModifiers { super_key: true, ..KeyModifiers::default() };
+        assert!(!mods.shift);
+        assert!(!mods.ctrl);
+        assert!(!mods.alt);
+        assert!(mods.super_key);
+    }
+
+    #[test]
+    fn test_key_modifiers_caps_lock() {
+        let mods = KeyModifiers { caps_lock: true, ..KeyModifiers::default() };
+        assert!(mods.caps_lock);
+        assert!(!mods.shift);
+        assert!(!mods.ctrl);
+    }
+
+    #[test]
+    fn test_key_modifiers_num_lock() {
+        let mods = KeyModifiers { num_lock: true, ..KeyModifiers::default() };
+        assert!(mods.num_lock);
+        assert!(!mods.shift);
+        assert!(!mods.ctrl);
+    }
+
+    #[test]
+    fn test_key_modifiers_shift_ctrl() {
+        // Common combination: Ctrl+Shift
+        let mods = KeyModifiers {
+            shift: true,
+            ctrl: true,
+            ..KeyModifiers::default()
+        };
+        assert!(mods.shift);
+        assert!(mods.ctrl);
+        assert!(!mods.alt);
+    }
+
+    #[test]
+    fn test_key_modifiers_ctrl_alt() {
+        // Ctrl+Alt combination
+        let mods = KeyModifiers {
+            ctrl: true,
+            alt: true,
+            ..KeyModifiers::default()
+        };
+        assert!(!mods.shift);
+        assert!(mods.ctrl);
+        assert!(mods.alt);
+    }
+
+    #[test]
+    fn test_key_modifiers_ctrl_shift_alt() {
+        // Three modifier combination
+        let mods = KeyModifiers {
+            shift: true,
+            ctrl: true,
+            alt: true,
+            ..KeyModifiers::default()
+        };
+        assert!(mods.shift);
+        assert!(mods.ctrl);
+        assert!(mods.alt);
+    }
+
+    #[test]
+    fn test_key_modifiers_all_true() {
+        let mods = KeyModifiers {
+            shift: true,
+            ctrl: true,
+            alt: true,
+            super_key: true,
+            hyper: true,
+            meta: true,
+            caps_lock: true,
+            num_lock: true,
+        };
+        assert!(mods.shift);
+        assert!(mods.ctrl);
+        assert!(mods.alt);
+        assert!(mods.super_key);
+        assert!(mods.hyper);
+        assert!(mods.meta);
+        assert!(mods.caps_lock);
+        assert!(mods.num_lock);
+    }
+
+    // ===========================================
+    // KeyEvent Tests
+    // ===========================================
+
+    #[test]
+    fn test_key_event_new_basic() {
+        let event = KeyEvent::new(KeyCode::Char('a'), KeyModifiers::default());
+        assert!(matches!(event.code, KeyCode::Char('a')));
+        assert_eq!(event.kind, KeyEventKind::Press);
+        assert!(!event.modifiers.shift);
+        assert!(!event.modifiers.ctrl);
+    }
+
+    #[test]
+    fn test_key_event_with_kind() {
+        let mods = KeyModifiers { shift: true, ..KeyModifiers::default() };
+        let event = KeyEvent::with_kind(KeyCode::Up, mods, KeyEventKind::Press);
+        assert!(matches!(event.code, KeyCode::Up));
+        assert!(event.modifiers.shift);
+        assert_eq!(event.kind, KeyEventKind::Press);
+    }
+
+    #[test]
+    fn test_key_event_from_keycode() {
+        let event = KeyEvent::from(KeyCode::Enter);
+        assert!(matches!(event.code, KeyCode::Enter));
+        assert!(!event.modifiers.shift);
+        assert!(!event.modifiers.ctrl);
+        assert!(!event.modifiers.alt);
+    }
+
+    #[test]
+    fn test_key_event_kind_is_press() {
+        // Browser events always have KeyEventKind::Press
+        let event = KeyEvent::new(KeyCode::Down, KeyModifiers::default());
+        assert_eq!(event.kind, KeyEventKind::Press);
+    }
+
+    #[test]
+    fn test_key_event_function_key() {
+        let event = KeyEvent::new(KeyCode::F(1), KeyModifiers::default());
+        assert!(matches!(event.code, KeyCode::F(1)));
+        assert_eq!(event.kind, KeyEventKind::Press);
+    }
+
+    #[test]
+    fn test_key_event_with_ctrl_modifier() {
+        let mods = KeyModifiers { ctrl: true, ..KeyModifiers::default() };
+        let event = KeyEvent::new(KeyCode::Char('c'), mods);
+        assert!(event.modifiers.ctrl);
+        assert!(!event.modifiers.shift);
+        assert!(!event.modifiers.alt);
+    }
+
+    #[test]
+    fn test_key_event_with_shift_modifier() {
+        let mods = KeyModifiers { shift: true, ..KeyModifiers::default() };
+        let event = KeyEvent::new(KeyCode::Char('A'), mods);
+        assert!(event.modifiers.shift);
+        assert!(matches!(event.code, KeyCode::Char('A')));
+    }
+
+    #[test]
+    fn test_key_event_with_alt_modifier() {
+        let mods = KeyModifiers { alt: true, ..KeyModifiers::default() };
+        let event = KeyEvent::new(KeyCode::Tab, mods);
+        assert!(event.modifiers.alt);
+        assert!(matches!(event.code, KeyCode::Tab));
+    }
+
+    #[test]
+    fn test_key_event_arrow_with_shift() {
+        let mods = KeyModifiers { shift: true, ..KeyModifiers::default() };
+        let event = KeyEvent::new(KeyCode::Right, mods);
+        assert!(matches!(event.code, KeyCode::Right));
+        assert!(event.modifiers.shift);
+    }
+
+    // ===========================================
+    // Event Type Tests
+    // ===========================================
+
+    #[test]
+    fn test_event_key_variant() {
+        let key_event = KeyEvent::new(KeyCode::Char('x'), KeyModifiers::default());
+        let event = Event::Key(key_event);
+        match event {
+            Event::Key(ke) => {
+                assert!(matches!(ke.code, KeyCode::Char('x')));
+                assert_eq!(ke.kind, KeyEventKind::Press);
+            }
+            _ => panic!("Expected Event::Key"),
+        }
+    }
+
+    #[test]
+    fn test_event_mouse_variant() {
+        let mouse_event = MouseEvent::new(0, 0, MouseButton::Left, KeyModifiers::default());
+        let event = Event::Mouse(mouse_event);
+        match event {
+            Event::Mouse(me) => {
+                assert_eq!(me.column, 0);
+                assert_eq!(me.row, 0);
+                assert!(matches!(me.button, MouseButton::Left));
+            }
+            _ => panic!("Expected Event::Mouse"),
+        }
+    }
+
+    #[test]
+    fn test_event_key_with_esc() {
+        let event = Event::Key(KeyEvent::new(KeyCode::Esc, KeyModifiers::default()));
+        match event {
+            Event::Key(ke) => assert!(matches!(ke.code, KeyCode::Esc)),
+            _ => panic!("Wrong event type"),
+        }
+    }
+
+    #[test]
+    fn test_event_key_with_enter() {
+        let event = Event::Key(KeyEvent::new(KeyCode::Enter, KeyModifiers::default()));
+        match event {
+            Event::Key(ke) => assert!(matches!(ke.code, KeyCode::Enter)),
+            _ => panic!("Expected Key event"),
+        }
+    }
+
+    #[test]
+    fn test_event_key_with_backspace() {
+        let event = Event::Key(KeyEvent::new(KeyCode::Backspace, KeyModifiers::default()));
+        match event {
+            Event::Key(ke) => assert!(matches!(ke.code, KeyCode::Backspace)),
+            _ => panic!("Expected Key event"),
+        }
+    }
+
+    #[test]
+    fn test_event_key_with_delete() {
+        let event = Event::Key(KeyEvent::new(KeyCode::Delete, KeyModifiers::default()));
+        match event {
+            Event::Key(ke) => assert!(matches!(ke.code, KeyCode::Delete)),
+            _ => panic!("Expected Key event"),
+        }
+    }
+
+    #[test]
+    fn test_event_key_with_tab() {
+        let event = Event::Key(KeyEvent::new(KeyCode::Tab, KeyModifiers::default()));
+        match event {
+            Event::Key(ke) => assert!(matches!(ke.code, KeyCode::Tab)),
+            _ => panic!("Expected Key event"),
+        }
+    }
+
+    #[test]
+    fn test_event_key_with_navigation_keys() {
+        // Home
+        let event = Event::Key(KeyEvent::new(KeyCode::Home, KeyModifiers::default()));
+        match event {
+            Event::Key(ke) => assert!(matches!(ke.code, KeyCode::Home)),
+            _ => panic!("Expected Key event"),
+        }
+
+        // End
+        let event = Event::Key(KeyEvent::new(KeyCode::End, KeyModifiers::default()));
+        match event {
+            Event::Key(ke) => assert!(matches!(ke.code, KeyCode::End)),
+            _ => panic!("Expected Key event"),
+        }
+
+        // PageUp
+        let event = Event::Key(KeyEvent::new(KeyCode::PageUp, KeyModifiers::default()));
+        match event {
+            Event::Key(ke) => assert!(matches!(ke.code, KeyCode::PageUp)),
+            _ => panic!("Expected Key event"),
+        }
+
+        // PageDown
+        let event = Event::Key(KeyEvent::new(KeyCode::PageDown, KeyModifiers::default()));
+        match event {
+            Event::Key(ke) => assert!(matches!(ke.code, KeyCode::PageDown)),
+            _ => panic!("Expected Key event"),
+        }
+    }
+
+    #[test]
+    fn test_event_key_with_all_function_keys() {
+        for f in 1..=12u8 {
+            let event = Event::Key(KeyEvent::new(KeyCode::F(f), KeyModifiers::default()));
+            match event {
+                Event::Key(ke) => assert!(matches!(ke.code, KeyCode::F(n) if n == f)),
+                _ => panic!("Expected Key event for F{}", f),
+            }
+        }
+    }
+
+    #[test]
+    fn test_event_key_with_all_modifiers() {
+        // Test all modifier combinations
+        let shift_event = Event::Key(KeyEvent::new(
+            KeyCode::Char('a'),
+            KeyModifiers { shift: true, ..KeyModifiers::default() }
+        ));
+        let ctrl_event = Event::Key(KeyEvent::new(
+            KeyCode::Char('b'),
+            KeyModifiers { ctrl: true, ..KeyModifiers::default() }
+        ));
+        let alt_event = Event::Key(KeyEvent::new(
+            KeyCode::Char('c'),
+            KeyModifiers { alt: true, ..KeyModifiers::default() }
+        ));
+        
+        match shift_event {
+            Event::Key(ke) => assert!(ke.modifiers.shift),
+            _ => panic!("Expected Key event"),
+        }
+        match ctrl_event {
+            Event::Key(ke) => assert!(ke.modifiers.ctrl),
+            _ => panic!("Expected Key event"),
+        }
+        match alt_event {
+            Event::Key(ke) => assert!(ke.modifiers.alt),
+            _ => panic!("Expected Key event"),
+        }
+    }
+
+    #[test]
+    fn test_key_event_modifiers_equality() {
+        let mods1 = KeyModifiers { shift: true, ctrl: true, ..KeyModifiers::default() };
+        let mods2 = KeyModifiers { shift: true, ctrl: true, ..KeyModifiers::default() };
+        let mods3 = KeyModifiers { shift: true, ctrl: false, ..KeyModifiers::default() };
+        
+        assert_eq!(mods1, mods2);
+        assert_ne!(mods1, mods3);
+    }
+
+    #[test]
+    fn test_key_event_keycode_equality() {
+        let code1 = KeyCode::Char('a');
+        let code2 = KeyCode::Char('a');
+        let code3 = KeyCode::Char('b');
+        
+        assert_eq!(code1, code2);
+        assert_ne!(code1, code3);
+    }
+
+    #[test]
+    fn test_key_event_clone() {
+        let event = KeyEvent::new(KeyCode::Char('x'), KeyModifiers::default());
+        let cloned = event.clone();
+        assert_eq!(event.code, cloned.code);
+        assert_eq!(event.modifiers, cloned.modifiers);
+        assert_eq!(event.kind, cloned.kind);
+    }
+
+    #[test]
+    fn test_key_event_copy_behavior() {
+        // KeyEvent derives Clone but not Copy
+        let event = KeyEvent::new(KeyCode::Up, KeyModifiers::default());
+        let moved = event.clone();
+        assert!(matches!(event.code, KeyCode::Up));
+        assert!(matches!(moved.code, KeyCode::Up));
+    }
 }
