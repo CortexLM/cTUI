@@ -1,16 +1,73 @@
+//! Gauge widgets for displaying progress and measurements in terminal UIs.
+//!
+//! This module provides widgets for visualizing progress, percentages, and
+//! numerical values. Gauges come in two variants: circular (arc) gauges and
+//! linear progress bars.
+//!
+//! # Widgets
+//!
+//! - [`Gauge`]: A circular/arc gauge for displaying percentages
+//! - [`LinearGauge`]: A horizontal progress bar
+//!
+//! # Example
+//!
+//! \`\`\`rust
+//! use ctui_components::{Gauge, LinearGauge, Widget};
+//! use ctui_core::style::{Style, Color};
+//!
+//! // Circular gauge for CPU usage
+//! let gauge = Gauge::new()
+//!     .value(65.0)
+//!     .max(100.0)
+//!     .label("CPU")
+//!     .gauge_style(Style::new().fg(Color::Green));
+//!
+//! // Linear progress bar for downloads
+//! let progress = LinearGauge::new()
+//!     .value(750.0)
+//!     .max(1000.0)
+//!     .show_percent(true)
+//!     .filled_style(Style::new().fg(Color::Blue));
+//! \`\`\`
+
 use crate::Widget;
 use ctui_core::style::Style;
 use ctui_core::{Buffer, Rect};
 use std::f64::consts::PI;
 
+/// A circular/arc gauge widget for displaying progress.
+///
+/// Renders a semi-circular gauge filled based on the value ratio.
+/// Useful for displaying CPU usage, battery level, temperature, or any
+/// other percentage-based metric.
+///
+/// # Example
+///
+/// \`\`\`rust
+/// use ctui_components::Gauge;
+/// use ctui_core::style::{Style, Color};
+///
+/// let gauge = Gauge::new()
+///     .value(75.0)
+///     .max(100.0)
+///     .label("Memory")
+///     .gauge_style(Style::new().fg(Color::Cyan));
+/// \`\`\`
 #[derive(Clone, Debug)]
 pub struct Gauge {
+    /// Current value of the gauge.
     value: f64,
+    /// Maximum value (value/max gives the percentage).
     max: f64,
+    /// Optional label displayed in the center.
     label: Option<String>,
+    /// Style for unfilled portions.
     style: Style,
+    /// Style for filled portions.
     gauge_style: Style,
+    /// Starting angle of the arc (radians).
     start_angle: f64,
+    /// Ending angle of the arc (radians).
     end_angle: f64,
 }
 
@@ -29,41 +86,160 @@ impl Default for Gauge {
 }
 
 impl Gauge {
+    /// Creates a new gauge with 0% filled.
+    ///
+    /// Default settings:
+    /// - Arc from -135° to +135° (semi-circular)
+    /// - 100 max value
+    /// - No label (shows percentage instead)
+    ///
+    /// # Example
+    ///
+    /// \`\`\`rust
+    /// use ctui_components::Gauge;
+    ///
+    /// let gauge = Gauge::new();
+    /// assert_eq!(gauge.percent(), 0.0);
+    /// \`\`\`
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Sets the current value of the gauge.
+    ///
+    /// The value is clamped between 0 and \`max\`.
+    ///
+    /// # Arguments
+    ///
+    /// * \`value\` - The current value.
+    ///
+    /// # Example
+    ///
+    /// \`\`\`rust
+    /// use ctui_components::Gauge;
+    ///
+    /// let gauge = Gauge::new().value(50.0);
+    /// assert_eq!(gauge.percent(), 0.5);
+    /// \`\`\`
     pub fn value(mut self, value: f64) -> Self {
         self.value = value.clamp(0.0, self.max);
         self
     }
 
+    /// Sets the maximum value (100% point).
+    ///
+    /// # Arguments
+    ///
+    /// * \`max\` - The maximum value (must be >= 0).
+    ///
+    /// # Example
+    ///
+    /// \`\`\`rust
+    /// use ctui_components::Gauge;
+    ///
+    /// let gauge = Gauge::new().max(200.0).value(100.0);
+    /// assert_eq!(gauge.percent(), 0.5);
+    /// \`\`\`
     pub fn max(mut self, max: f64) -> Self {
         self.max = max.max(0.0);
         self
     }
 
+    /// Sets the label displayed in the gauge center.
+    ///
+    /// If no label is set, the percentage is displayed instead.
+    ///
+    /// # Arguments
+    ///
+    /// * \`label\` - The label text to display.
+    ///
+    /// # Example
+    ///
+    /// \`\`\`rust
+    /// use ctui_components::Gauge;
+    ///
+    /// let gauge = Gauge::new().value(42.0).label("°C");
+    /// \`\`\`
     pub fn label(mut self, label: impl Into<String>) -> Self {
         self.label = Some(label.into());
         self
     }
 
+    /// Sets the style for unfilled portions of the gauge.
+    ///
+    /// # Arguments
+    ///
+    /// * \`style\` - The [`Style`] for empty areas.
+    ///
+    /// # Example
+    ///
+    /// \`\`\`rust
+    /// use ctui_components::Gauge;
+    /// use ctui_core::style::{Style, Color};
+    ///
+    /// let gauge = Gauge::new().style(Style::new().fg(Color::DarkGray));
+    /// \`\`\`
     pub fn style(mut self, style: Style) -> Self {
         self.style = style;
         self
     }
 
+    /// Sets the style for filled portions of the gauge.
+    ///
+    /// # Arguments
+    ///
+    /// * \`style\` - The [`Style`] for filled areas.
+    ///
+    /// # Example
+    ///
+    /// \`\`\`rust
+    /// use ctui_components::Gauge;
+    /// use ctui_core::style::{Style, Color};
+    ///
+    /// let gauge = Gauge::new()
+    ///     .value(100.0)
+    ///     .gauge_style(Style::new().fg(Color::Green));
+    /// \`\`\`
     pub fn gauge_style(mut self, style: Style) -> Self {
         self.gauge_style = style;
         self
     }
 
+    /// Sets the angle range for the gauge arc.
+    ///
+    /// Angles are specified in radians. Default is -135° to +135°,
+    /// creating a semi-circular gauge opening upward.
+    ///
+    /// # Arguments
+    ///
+    /// * \`start\` - Starting angle in radians.
+    /// * \`end\` - Ending angle in radians.
+    ///
+    /// # Example
+    ///
+    /// \`\`\`rust
+    /// use ctui_components::Gauge;
+    /// use std::f64::consts::PI;
+    ///
+    /// // Full circle gauge
+    /// let gauge = Gauge::new().angle_range(0.0, 2.0 * PI);
+    /// \`\`\`
     pub fn angle_range(mut self, start: f64, end: f64) -> Self {
         self.start_angle = start;
         self.end_angle = end;
         self
     }
 
+    /// Returns the current value as a percentage (0.0 to 1.0).
+    ///
+    /// # Example
+    ///
+    /// \`\`\`rust
+    /// use ctui_components::Gauge;
+    ///
+    /// let gauge = Gauge::new().value(25.0).max(100.0);
+    /// assert_eq!(gauge.percent(), 0.25);
+    /// \`\`\`
     pub fn percent(&self) -> f64 {
         if self.max == 0.0 {
             0.0
@@ -72,6 +248,9 @@ impl Gauge {
         }
     }
 
+    /// Checks if a point is within an arc segment.
+    ///
+    /// Used internally to determine which cells to fill.
     fn in_arc(x: f64, y: f64, outer_r: f64, inner_r: f64, start: f64, end: f64) -> bool {
         let dist_sq = x * x + y * y;
         let outer_r_sq = outer_r * outer_r;
@@ -94,6 +273,7 @@ impl Gauge {
         }
     }
 
+    /// Checks if an angle falls within the filled portion of the gauge.
     fn angle_in_range(&self, angle: f64, percent: f64) -> bool {
         let range = self.end_angle - self.start_angle;
         let filled_range = range * percent;
@@ -177,11 +357,11 @@ impl Widget for Gauge {
         }
 
         let pct_text = format!("{:.0}%", percent * 100.0);
-        let label = self.label.as_deref().unwrap_or(&pct_text);
-        let label_x = center_x.saturating_sub(label.len() as u16 / 2);
+        let label_text = self.label.as_deref().unwrap_or(&pct_text);
+        let label_x = center_x.saturating_sub(label_text.len() as u16 / 2);
         let label_y = center_y;
 
-        for (i, ch) in label.chars().enumerate() {
+        for (i, ch) in label_text.chars().enumerate() {
             let x = label_x + i as u16;
             if x < area.x + area.width {
                 buf.modify_cell(x, label_y, |cell| {
@@ -193,51 +373,182 @@ impl Widget for Gauge {
     }
 }
 
+/// A linear (horizontal) progress bar widget.
+///
+/// Renders a horizontal bar filled from left to right based on the value ratio.
+/// Useful for download progress, loading states, or any sequential progress.
+///
+/// # Example
+///
+/// \`\`\`rust
+/// use ctui_components::LinearGauge;
+/// use ctui_core::style::{Style, Color};
+///
+/// let progress = LinearGauge::new()
+///     .value(750.0)
+///     .max(1000.0)
+///     .show_percent(true)
+///     .filled_style(Style::new().fg(Color::Blue));
+/// \`\`\`
 #[derive(Clone, Debug, Default)]
 pub struct LinearGauge {
+    /// Current value.
     value: f64,
+    /// Maximum value.
     max: f64,
+    /// Optional label.
     label: Option<String>,
+    /// Style for unfilled portion.
     style: Style,
+    /// Style for filled portion.
     filled_style: Style,
+    /// Whether to show percentage label.
     show_percent: bool,
 }
 
 impl LinearGauge {
+    /// Creates a new linear gauge at 0%.
+    ///
+    /// # Example
+    ///
+    /// \`\`\`rust
+    /// use ctui_components::LinearGauge;
+    ///
+    /// let gauge = LinearGauge::new();
+    /// assert_eq!(gauge.percent(), 0.0);
+    /// \`\`\`
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Sets the current value.
+    ///
+    /// # Arguments
+    ///
+    /// * \`value\` - The current value.
+    ///
+    /// # Example
+    ///
+    /// \`\`\`rust
+    /// use ctui_components::LinearGauge;
+    ///
+    /// let gauge = LinearGauge::new().value(50.0);
+    /// \`\`\`
     pub fn value(mut self, value: f64) -> Self {
         self.value = value;
         self
     }
 
+    /// Sets the maximum value (100% point).
+    ///
+    /// # Arguments
+    ///
+    /// * \`max\` - The maximum value.
+    ///
+    /// # Example
+    ///
+    /// \`\`\`rust
+    /// use ctui_components::LinearGauge;
+    ///
+    /// let gauge = LinearGauge::new().max(200.0).value(100.0);
+    /// assert_eq!(gauge.percent(), 0.5);
+    /// \`\`\`
     pub fn max(mut self, max: f64) -> Self {
         self.max = max;
         self
     }
 
+    /// Sets the label displayed below the bar.
+    ///
+    /// Only displayed if \`show_percent\` is \`false\` and area has height > 1.
+    ///
+    /// # Arguments
+    ///
+    /// * \`label\` - The label text.
+    ///
+    /// # Example
+    ///
+    /// \`\`\`rust
+    /// use ctui_components::LinearGauge;
+    ///
+    /// let gauge = LinearGauge::new().label("Downloading...");
+    /// \`\`\`
     pub fn label(mut self, label: impl Into<String>) -> Self {
         self.label = Some(label.into());
         self
     }
 
+    /// Sets the style for the unfilled portion.
+    ///
+    /// # Arguments
+    ///
+    /// * \`style\` - The [`Style`] for empty areas.
+    ///
+    /// # Example
+    ///
+    /// \`\`\`rust
+    /// use ctui_components::LinearGauge;
+    /// use ctui_core::style::{Style, Color};
+    ///
+    /// let gauge = LinearGauge::new().style(Style::new().fg(Color::DarkGray));
+    /// \`\`\`
     pub fn style(mut self, style: Style) -> Self {
         self.style = style;
         self
     }
 
+    /// Sets the style for the filled portion.
+    ///
+    /// # Arguments
+    ///
+    /// * \`style\` - The [`Style`] for filled areas.
+    ///
+    /// # Example
+    ///
+    /// \`\`\`rust
+    /// use ctui_components::LinearGauge;
+    /// use ctui_core::style::{Style, Color};
+    ///
+    /// let gauge = LinearGauge::new()
+    ///     .filled_style(Style::new().fg(Color::Green));
+    /// \`\`\`
     pub fn filled_style(mut self, style: Style) -> Self {
         self.filled_style = style;
         self
     }
 
+    /// Whether to display the percentage below the bar.
+    ///
+    /// When \`true\`, shows "XX%" instead of the custom label.
+    ///
+    /// # Arguments
+    ///
+    /// * \`show\` - \`true\` to show percentage, \`false\` for label.
+    ///
+    /// # Example
+    ///
+    /// \`\`\`rust
+    /// use ctui_components::LinearGauge;
+    ///
+    /// let gauge = LinearGauge::new()
+    ///     .value(75.0)
+    ///     .show_percent(true);  // Shows "75%"
+    /// \`\`\`
     pub fn show_percent(mut self, show: bool) -> Self {
         self.show_percent = show;
         self
     }
 
+    /// Returns the current value as a percentage (0.0 to 1.0).
+    ///
+    /// # Example
+    ///
+    /// \`\`\`rust
+    /// use ctui_components::LinearGauge;
+    ///
+    /// let gauge = LinearGauge::new().value(30.0).max(100.0);
+    /// assert_eq!(gauge.percent(), 0.3);
+    /// \`\`\`
     pub fn percent(&self) -> f64 {
         if self.max == 0.0 {
             0.0

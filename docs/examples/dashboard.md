@@ -321,7 +321,7 @@ impl ThemedDashboard {
 ## Run the Example
 
 ```bash
-cargo run --example dashboard
+cargo run -p ctui-benches --example dashboard
 ```
 
 ## See Also

@@ -6,6 +6,7 @@ Complete example applications demonstrating cTUI features.
 
 | Example | Description |
 |---------|-------------|
+| [Minimal](#minimal-example) | Simplest Hello World |
 | [Counter](counter.md) | Minimal stateful app |
 | [Todo App](todo.md) | Full CRUD application |
 | [Dashboard](dashboard.md) | Real-time data visualization |
@@ -16,15 +17,16 @@ Complete example applications demonstrating cTUI features.
 
 ```bash
 # Run a specific example
-cargo run --example counter
-cargo run --example todo
-cargo run --example dashboard
+cargo run -p ctui-benches --example minimal
+cargo run -p ctui-benches --example counter
+cargo run -p ctui-benches --example todo
+cargo run -p ctui-benches --example dashboard
 
 # Run with features
-cargo run --example dashboard --features dynamic-assets
+cargo run -p ctui-benches --example dashboard --features dynamic-assets
 
 # Run with release optimizations
-cargo run --release --example game
+cargo run -p ctui-benches --release --example game
 ```
 
 ## Example Structure
@@ -33,11 +35,33 @@ All examples follow a similar structure:
 
 ```
 examples/
+├── minimal.rs      # Simplest Hello World
 ├── counter.rs      # Single file example
 ├── todo.rs         # Medium complexity
 ├── dashboard.rs    # Multiple components
 ├── editor.rs       # Full-featured app
 └── game.rs         # Game loop pattern
+```
+
+## Minimal Example
+
+The simplest possible cTUI example demonstrating basic buffer rendering:
+
+```rust
+use ctui_core::{Buffer, Rect};
+
+fn main() {
+    let area = Rect::new(0, 0, 50, 10);
+    let mut buf = Buffer::empty(area);
+
+    // Render "Hello, cTUI!" to the buffer
+    let text = "Hello, cTUI!";
+    for (i, ch) in text.chars().enumerate() {
+        buf.modify_cell(area.x + i as u16, area.y, |cell| {
+            cell.symbol = ch.to_string();
+        });
+    }
+}
 ```
 
 ## Example Patterns

@@ -312,7 +312,7 @@ fn handle_event(&mut self, event: &Event) -> Option<Box<dyn Msg>> {
 ## Run the Example
 
 ```bash
-cargo run --example todo
+cargo run -p ctui-benches --example todo
 ```
 
 ## See Also

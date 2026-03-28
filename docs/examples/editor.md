@@ -315,7 +315,7 @@ impl CodeEditor {
 ## Run the Example
 
 ```bash
-cargo run --example editor
+cargo run -p ctui-benches --example editor
 ```
 
 ## See Also

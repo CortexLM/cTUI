@@ -1,41 +1,110 @@
+//! Canvas widget for drawing geometric shapes.
+//!
+//! This module provides a [`Canvas`] widget for rendering geometric
+//! primitives like lines, rectangles, and circles. Useful for creating
+//! diagrams, visualizations, and custom graphics within the terminal.
+//!
+//! # Features
+//!
+//! - Lines with Bresenham's algorithm
+//! - Rectangles (filled and outline)
+//! - Circles (filled and outline)
+//! - Background fill option
+//! - Normalized coordinate system (0.0-1.0)
+//!
+//! # Coordinate System
+//!
+//! All shapes use normalized coordinates where:
+//! - (0.0, 0.0) is top-left
+//! - (1.0, 1.0) is bottom-right
+//!
+//! This allows shapes to scale with the available area.
+//!
+//! # Example
+//!
+//! ```ignore
+//! use ctui_components::{Canvas, Point, Shape};
+//!
+//! let canvas = Canvas::new()
+//!     .line(Point::new(0.0, 0.0), Point::new(1.0, 1.0))
+//!     .rectangle(Point::new(0.2, 0.2), Point::new(0.8, 0.8))
+//!     .circle(Point::new(0.5, 0.5), 0.3);
+//! ```
+
 use crate::Widget;
 use ctui_core::style::Style;
 use ctui_core::{Buffer, Rect};
 
+/// A 2D point in normalized canvas coordinates.
+///
+/// Coordinates are in the range [0.0, 1.0] where:
+/// - x=0.0 is left edge, x=1.0 is right edge
+/// - y=0.0 is top edge, y=1.0 is bottom edge
+///
+/// # Example
+///
+/// ```ignore
+/// // Center of canvas
+/// let center = Point::new(0.5, 0.5);
+/// // Bottom-right corner
+/// let corner = Point::new(1.0, 1.0);
+/// ```
 #[derive(Clone, Debug)]
 pub struct Point {
+    /// X coordinate (0.0 = left, 1.0 = right)
     pub x: f64,
+    /// Y coordinate (0.0 = top, 1.0 = bottom)
     pub y: f64,
 }
 
 impl Point {
+    /// Creates a new point at the given coordinates.
     pub fn new(x: f64, y: f64) -> Self {
         Self { x, y }
     }
 }
 
+/// A geometric shape for rendering on a [`Canvas`].
+///
+/// Shapes use normalized coordinates and can be customized
+/// with styles and fill options.
 #[derive(Clone, Debug)]
 pub enum Shape {
+    /// A line segment between two points.
     Line {
+        /// Starting point of the line
         start: Point,
+        /// Ending point of the line
         end: Point,
+        /// Style for the line
         style: Style,
     },
+    /// A rectangle defined by opposite corners.
     Rectangle {
+        /// Top-left corner
         top_left: Point,
+        /// Bottom-right corner
         bottom_right: Point,
+        /// Style for the rectangle
         style: Style,
+        /// Whether to fill the interior
         filled: bool,
     },
+    /// A circle defined by center and radius.
     Circle {
+        /// Center point of the circle
         center: Point,
+        /// Radius as fraction of canvas size
         radius: f64,
+        /// Style for the circle
         style: Style,
+        /// Whether to fill the interior
         filled: bool,
     },
 }
 
 impl Shape {
+    /// Creates a new line shape with default style.
     pub fn line(start: Point, end: Point) -> Self {
         Shape::Line {
             start,
@@ -44,10 +113,12 @@ impl Shape {
         }
     }
 
+    /// Creates a new line shape with custom style.
     pub fn line_styled(start: Point, end: Point, style: Style) -> Self {
         Shape::Line { start, end, style }
     }
 
+    /// Creates an outline rectangle with default style.
     pub fn rectangle(top_left: Point, bottom_right: Point) -> Self {
         Shape::Rectangle {
             top_left,
@@ -57,6 +128,7 @@ impl Shape {
         }
     }
 
+    /// Creates a filled rectangle with default style.
     pub fn rectangle_filled(top_left: Point, bottom_right: Point) -> Self {
         Shape::Rectangle {
             top_left,
@@ -66,6 +138,7 @@ impl Shape {
         }
     }
 
+    /// Creates a rectangle with custom style and fill option.
     pub fn rectangle_styled(
         top_left: Point,
         bottom_right: Point,
@@ -80,6 +153,10 @@ impl Shape {
         }
     }
 
+    /// Creates an outline circle with default style.
+    ///
+    /// The radius is expressed as a fraction of the canvas size.
+    /// A radius of 0.5 means half the minimum of width/height.
     pub fn circle(center: Point, radius: f64) -> Self {
         Shape::Circle {
             center,
@@ -89,6 +166,7 @@ impl Shape {
         }
     }
 
+    /// Creates a filled circle with default style.
     pub fn circle_filled(center: Point, radius: f64) -> Self {
         Shape::Circle {
             center,
@@ -98,6 +176,7 @@ impl Shape {
         }
     }
 
+    /// Creates a circle with custom style and fill option.
     pub fn circle_styled(center: Point, radius: f64, style: Style, filled: bool) -> Self {
         Shape::Circle {
             center,
@@ -108,6 +187,20 @@ impl Shape {
     }
 }
 
+/// A canvas widget for drawing geometric shapes.
+///
+/// The `Canvas` widget renders a collection of [`Shape`] primitives
+/// using normalized coordinates. Shapes are drawn in the order they
+/// are added.
+///
+/// # Example
+///
+/// ```ignore
+/// let canvas = Canvas::new()
+///     .line(Point::new(0.0, 0.0), Point::new(1.0, 1.0))
+///     .rectangle(Point::new(0.1, 0.1), Point::new(0.9, 0.9))
+///     .circle(Point::new(0.5, 0.5), 0.3);
+/// ```
 #[derive(Clone, Debug, Default)]
 pub struct Canvas {
     shapes: Vec<Shape>,
@@ -116,40 +209,56 @@ pub struct Canvas {
 }
 
 impl Canvas {
+    /// Creates a new empty canvas.
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Adds a shape to the canvas.
     pub fn shape(mut self, shape: Shape) -> Self {
         self.shapes.push(shape);
         self
     }
 
+    /// Adds a line shape to the canvas.
+    ///
+    /// Convenience method that creates a [`Shape::Line`].
     pub fn line(mut self, start: Point, end: Point) -> Self {
         self.shapes.push(Shape::line(start, end));
         self
     }
 
+    /// Adds a rectangle shape to the canvas.
+    ///
+    /// Convenience method that creates an outline [`Shape::Rectangle`].
     pub fn rectangle(mut self, top_left: Point, bottom_right: Point) -> Self {
         self.shapes.push(Shape::rectangle(top_left, bottom_right));
         self
     }
 
+    /// Adds a circle shape to the canvas.
+    ///
+    /// Convenience method that creates an outline [`Shape::Circle`].
     pub fn circle(mut self, center: Point, radius: f64) -> Self {
         self.shapes.push(Shape::circle(center, radius));
         self
     }
 
+    /// Sets a background fill for the canvas.
+    ///
+    /// The background is drawn first, before any shapes.
     pub fn background(mut self, ch: char, style: Style) -> Self {
         self.background = Some(ch);
         self.background_style = style;
         self
     }
 
+    /// Removes all shapes from the canvas.
     pub fn clear(&mut self) {
         self.shapes.clear();
     }
 
+    /// Draws a line using Bresenham's algorithm.
     fn draw_line(&self, start: &Point, end: &Point, style: &Style, area: Rect, buf: &mut Buffer) {
         let x0 = (start.x * area.width as f64) as i32;
         let y0 = (start.y * area.height as f64) as i32;
@@ -190,6 +299,7 @@ impl Canvas {
         }
     }
 
+    /// Draws a rectangle (filled or outline).
     fn draw_rectangle(
         &self,
         tl: &Point,
@@ -240,13 +350,22 @@ impl Canvas {
                     });
                 }
             }
-            buf.modify_cell(area.x + x0, area.y + y0, |cell| { cell.symbol = "┌".to_string(); });
-            buf.modify_cell(area.x + x1, area.y + y0, |cell| { cell.symbol = "┐".to_string(); });
-            buf.modify_cell(area.x + x0, area.y + y1, |cell| { cell.symbol = "└".to_string(); });
-            buf.modify_cell(area.x + x1, area.y + y1, |cell| { cell.symbol = "┘".to_string(); });
+            buf.modify_cell(area.x + x0, area.y + y0, |cell| {
+                cell.symbol = "┌".to_string();
+            });
+            buf.modify_cell(area.x + x1, area.y + y0, |cell| {
+                cell.symbol = "┐".to_string();
+            });
+            buf.modify_cell(area.x + x0, area.y + y1, |cell| {
+                cell.symbol = "└".to_string();
+            });
+            buf.modify_cell(area.x + x1, area.y + y1, |cell| {
+                cell.symbol = "┘".to_string();
+            });
         }
     }
 
+    /// Draws a circle (filled or outline) using midpoint algorithm.
     fn draw_circle(
         &self,
         center: &Point,

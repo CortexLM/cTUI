@@ -85,25 +85,35 @@ name = "message_dispatch"
 harness = false
 required-features = ["component-pool"]
 
+
 [[example]]
 name = "counter"
 path = "examples/counter.rs"
+
 
 [[example]]
 name = "todo"
 path = "examples/todo.rs"
 
+
 [[example]]
 name = "dashboard"
 path = "examples/dashboard.rs"
+
 
 [[example]]
 name = "file_explorer"
 path = "examples/file_explorer.rs"
 
+
 [[example]]
 name = "animation"
 path = "examples/animation.rs"
+
+
+[[example]]
+name = "minimal"
+path = "examples/minimal.rs"
 
 [[example]]
 name = "render_gallery"

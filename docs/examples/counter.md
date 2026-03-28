@@ -226,7 +226,7 @@ fn render(&self, area: Rect, buf: &mut Buffer) {
 ## Run the Example
 
 ```bash
-cargo run --example counter
+cargo run -p ctui-benches --example counter
 ```
 
 ## See Also

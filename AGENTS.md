@@ -82,7 +82,7 @@ KeyframeAnimation::new()
 ## COMMANDS
 
 ```bash
-cargo test --workspace --all-features    # Run all 1079 tests
+cargo test --workspace --all-features    # Run all 1460 tests
 cargo clippy --workspace -- -D warnings  # Lint check
 cargo bench                                # Criterion benchmarks
 cargo run --example counter                # Run example
@@ -111,7 +111,7 @@ ctui-core      (foundation, no deps)
 
 ## NOTES
 
-- ~43k lines Rust, 1079 tests across workspace
+- ~55k lines Rust, 1460 tests across workspace
 - CI: blacksmith-4cpu-ubuntu-2204 runner
 - Lints: `#![deny(unsafe_code)]`, clippy pedantic + nursery
 - Release profile: LTO + opt-level 3

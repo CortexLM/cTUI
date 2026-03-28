@@ -93,7 +93,7 @@ impl Component for HelloWorld {
 Run with:
 
 ```bash
-cargo run --example minimal
+cargo run -p ctui-benches --example minimal
 ```
 
 ## Architecture

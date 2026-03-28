@@ -414,7 +414,7 @@ impl HighScores {
 ## Run the Example
 
 ```bash
-cargo run --example game
+cargo run -p ctui-benches --example game
 ```
 
 ## See Also
