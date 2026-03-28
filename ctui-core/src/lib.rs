@@ -58,6 +58,7 @@ pub mod backend;  // Backend trait is available, implementations may be gated
 pub mod buffer;
 pub mod cell;
 pub mod component;
+pub mod error;
 pub mod event;
 pub mod geometry;
 pub mod packed_cell;
@@ -80,6 +81,7 @@ pub use backend::{Backend, CursorConfig, CursorStyle};
 pub use buffer::Buffer;
 pub use cell::Cell;
 pub use component::{Cmd, Component, Msg};
+pub use error::CoreError;
 pub use event::{Event, EventHandler, FnEventHandler, KeyCode, KeyEvent, KeyEventKind, KeyModifiers, MouseEvent, ResizeEvent};
 pub use geometry::{Position, Rect, Size};
 pub use packed_cell::PackedCell;

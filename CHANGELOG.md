@@ -54,6 +54,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   fn z_index(&self) -> i32 { 0 }
   ```
 - `RenderLoop` moved from `ctui-core` to crate-specific implementations
+- `Widget` trait consolidated to `ctui-core`. The `ctui-components::Widget` re-export is now deprecated.
+  - Migration: Use `use ctui_core::Widget;` instead of `use ctui_components::Widget;`
+  - The re-export remains for backward compatibility but will be removed in a future version
 
 ### Performance
 - Buffer diff: 35% faster with packed cell fast path

@@ -157,6 +157,22 @@ pub mod text;
 pub mod tree;
 
 pub use block::{Alignment, Block, PositionedTitle, Title, TitlePosition};
+
+/// The `Widget` trait is now consolidated in `ctui-core`.
+///
+/// # Migration
+/// Use `ctui_core::Widget` directly:
+/// ```rust
+/// // Old
+/// use ctui_components::Widget;
+///
+/// // New
+/// use ctui_core::Widget;
+/// ```
+#[deprecated(
+    since = "0.2.0",
+    note = "Use `ctui_core::Widget` directly. This re-export will be removed in a future version."
+)]
 pub use ctui_core::Widget;
 pub use borders::{BorderType, Borders};
 pub use canvas::{Canvas, Point, Shape};
