@@ -288,10 +288,10 @@ impl Form {
         };
 
         for (i, ch) in label_text.chars().take(self.label_width).enumerate() {
-            if let Some(cell) = buf.get_mut(area.x + i as u16, y) {
+            buf.modify_cell(area.x + i as u16, y, |cell| {
                 cell.symbol = ch.to_string();
                 cell.set_style(field.label_style);
-            }
+            });
         }
 
         let input_x = area.x + self.label_width as u16 + 1;
@@ -303,10 +303,10 @@ impl Form {
             self.style
         };
 
-        if let Some(cell) = buf.get_mut(input_x, y) {
+        buf.modify_cell(input_x, y, |cell| {
             cell.symbol = '['.to_string();
             cell.set_style(bracket_style);
-        }
+        });
 
         let display_value = match field.field_type {
             FieldType::Password => "*".repeat(field.value.chars().count()),
@@ -318,24 +318,22 @@ impl Form {
             .take(input_width.saturating_sub(2) as usize)
             .enumerate()
         {
-            if let Some(cell) = buf.get_mut(input_x + 1 + i as u16, y) {
+            buf.modify_cell(input_x + 1 + i as u16, y, |cell| {
                 cell.symbol = ch.to_string();
                 cell.set_style(field.style);
-            }
+            });
         }
 
-        if let Some(cell) = buf.get_mut(input_x + input_width.saturating_sub(1), y) {
+        buf.modify_cell(input_x + input_width.saturating_sub(1), y, |cell| {
             cell.symbol = ']'.to_string();
             cell.set_style(bracket_style);
-        }
+        });
 
         if let Some(ref error) = field.error {
             if area.height > 1 {
                 let error_y = y + 1;
                 for (i, ch) in error.chars().take(area.width as usize).enumerate() {
-                    if let Some(cell) = buf.get_mut(area.x + i as u16, error_y) {
-                        cell.symbol = ch.to_string();
-                    }
+                    buf.modify_cell(area.x + i as u16, error_y, |cell| { cell.symbol = ch.to_string(); });
                 }
             }
         }
@@ -347,18 +345,18 @@ impl Form {
         let cancel_text = format!("[ {} ]", self.cancel_label);
 
         for (i, ch) in submit_text.chars().enumerate() {
-            if let Some(cell) = buf.get_mut(area.x + i as u16, button_row) {
+            buf.modify_cell(area.x + i as u16, button_row, |cell| {
                 cell.symbol = ch.to_string();
                 cell.set_style(self.style);
-            }
+            });
         }
 
         let cancel_start = submit_text.len() + 2;
         for (i, ch) in cancel_text.chars().enumerate() {
-            if let Some(cell) = buf.get_mut(area.x + cancel_start as u16 + i as u16, button_row) {
+            buf.modify_cell(area.x + cancel_start as u16 + i as u16, button_row, |cell| {
                 cell.symbol = ch.to_string();
                 cell.set_style(self.style);
-            }
+            });
         }
     }
 }
@@ -479,7 +477,7 @@ mod tests {
         let mut output = String::new();
         for y in 0..height {
             for x in 0..width {
-                output.push_str(&buf[(x, y)].symbol);
+                if let Some(cell) = buf.get(x, y) { output.push_str(&cell.symbol); }
             }
             if y < height - 1 {
                 output.push('\n');

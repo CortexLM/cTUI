@@ -13,11 +13,11 @@ fn test_full_render_pipeline() {
 
     let frame = terminal
         .draw(|f| {
-            f.buffer_mut()[(0, 0)].symbol = "H".to_string();
-            f.buffer_mut()[(1, 0)].symbol = "e".to_string();
-            f.buffer_mut()[(2, 0)].symbol = "l".to_string();
-            f.buffer_mut()[(3, 0)].symbol = "l".to_string();
-            f.buffer_mut()[(4, 0)].symbol = "o".to_string();
+            f.buffer_mut().modify_cell(0, 0, |cell| { cell.symbol = "H".to_string(); });
+            f.buffer_mut().modify_cell(1, 0, |cell| { cell.symbol = "e".to_string(); });
+            f.buffer_mut().modify_cell(2, 0, |cell| { cell.symbol = "l".to_string(); });
+            f.buffer_mut().modify_cell(3, 0, |cell| { cell.symbol = "l".to_string(); });
+            f.buffer_mut().modify_cell(4, 0, |cell| { cell.symbol = "o".to_string(); });
         })
         .unwrap();
 
@@ -27,11 +27,11 @@ fn test_full_render_pipeline() {
     terminal.flush().unwrap();
 
     let backend = terminal.backend();
-    assert_eq!(backend.buffer()[(0, 0)].symbol, "H");
-    assert_eq!(backend.buffer()[(1, 0)].symbol, "e");
-    assert_eq!(backend.buffer()[(2, 0)].symbol, "l");
-    assert_eq!(backend.buffer()[(3, 0)].symbol, "l");
-    assert_eq!(backend.buffer()[(4, 0)].symbol, "o");
+    assert_eq!(backend.buffer().get(0, 0).unwrap().symbol, "H");
+    assert_eq!(backend.buffer().get(1, 0).unwrap().symbol, "e");
+    assert_eq!(backend.buffer().get(2, 0).unwrap().symbol, "l");
+    assert_eq!(backend.buffer().get(3, 0).unwrap().symbol, "l");
+    assert_eq!(backend.buffer().get(4, 0).unwrap().symbol, "o");
 }
 
 #[test]
@@ -41,24 +41,24 @@ fn test_double_buffer_swap() {
 
     terminal
         .draw(|f| {
-            f.buffer_mut()[(0, 0)].symbol = "A".to_string();
+            f.buffer_mut().modify_cell(0, 0, |cell| { cell.symbol = "A".to_string(); });
         })
         .unwrap();
 
     terminal
         .draw(|f| {
-            f.buffer_mut()[(0, 0)].symbol = "B".to_string();
+            f.buffer_mut().modify_cell(0, 0, |cell| { cell.symbol = "B".to_string(); });
         })
         .unwrap();
 
     terminal
         .draw(|f| {
-            f.buffer_mut()[(0, 0)].symbol = "C".to_string();
+            f.buffer_mut().modify_cell(0, 0, |cell| { cell.symbol = "C".to_string(); });
         })
         .unwrap();
 
     let backend = terminal.backend();
-    assert_eq!(backend.buffer()[(0, 0)].symbol, "C");
+    assert_eq!(backend.buffer().get(0, 0).unwrap().symbol, "C");
 }
 
 #[test]
@@ -69,19 +69,19 @@ fn test_diff_rendering_only_changed_cells() {
     terminal
         .draw(|f| {
             for i in 0..10 {
-                f.buffer_mut()[(i as u16, 0)].symbol = "X".to_string();
+                f.buffer_mut().modify_cell(i as u16, 0, |cell| { cell.symbol = "X".to_string(); });
             }
         })
         .unwrap();
 
     terminal
         .draw(|f| {
-            f.buffer_mut()[(5, 0)].symbol = "Y".to_string();
+            f.buffer_mut().modify_cell(5, 0, |cell| { cell.symbol = "Y".to_string(); });
         })
         .unwrap();
 
     let backend = terminal.backend();
-    assert_eq!(backend.buffer()[(5, 0)].symbol, "Y");
+    assert_eq!(backend.buffer().get(5, 0).unwrap().symbol, "Y");
 }
 
 #[test]
@@ -91,14 +91,14 @@ fn test_terminal_clear() {
 
     terminal
         .draw(|f| {
-            f.buffer_mut()[(0, 0)].symbol = "A".to_string();
+            f.buffer_mut().modify_cell(0, 0, |cell| { cell.symbol = "A".to_string(); });
         })
         .unwrap();
 
     terminal.clear().unwrap();
 
     let backend = terminal.backend();
-    assert_eq!(backend.buffer()[(0, 0)].symbol, " ");
+    assert_eq!(backend.buffer().get(0, 0).unwrap().symbol, " ");
 }
 
 #[test]
@@ -122,9 +122,7 @@ fn test_frame_render_widget() {
         fn render(self, area: Rect, buffer: &mut Buffer) {
             for y in area.y..area.y.saturating_add(area.height) {
                 for x in area.x..area.x.saturating_add(area.width) {
-                    if let Some(cell) = buffer.get_mut(x, y) {
-                        cell.symbol = "X".to_string();
-                    }
+                    buffer.modify_cell(x, y, |cell| { cell.symbol = "X".to_string(); });
                 }
             }
         }
@@ -141,11 +139,11 @@ fn test_frame_render_widget() {
         .unwrap();
 
     let backend = terminal.backend();
-    assert_eq!(backend.buffer()[(5, 5)].symbol, "X");
-    assert_eq!(backend.buffer()[(9, 5)].symbol, "X");
-    assert_eq!(backend.buffer()[(9, 7)].symbol, "X");
-    assert_eq!(backend.buffer()[(10, 5)].symbol, " ");
-    assert_eq!(backend.buffer()[(5, 8)].symbol, " ");
+    assert_eq!(backend.buffer().get(5, 5).unwrap().symbol, "X");
+    assert_eq!(backend.buffer().get(9, 5).unwrap().symbol, "X");
+    assert_eq!(backend.buffer().get(9, 7).unwrap().symbol, "X");
+    assert_eq!(backend.buffer().get(10, 5).unwrap().symbol, " ");
+    assert_eq!(backend.buffer().get(5, 8).unwrap().symbol, " ");
 }
 
 #[test]
@@ -157,18 +155,14 @@ fn test_component_render_with_block() {
         .draw(|f| {
             let area = Rect::new(0, 0, 20, 5);
             for x in area.x..area.x.saturating_add(area.width) {
-                if let Some(cell) = f.buffer_mut().get_mut(x, area.y) {
-                    cell.symbol = "═".to_string();
-                }
-                if let Some(cell) = f.buffer_mut().get_mut(x, area.y + area.height - 1) {
-                    cell.symbol = "═".to_string();
-                }
+                f.buffer_mut().modify_cell(x, area.y, |cell| { cell.symbol = "═".to_string(); });
+                f.buffer_mut().modify_cell(x, area.y + area.height - 1, |cell| { cell.symbol = "═".to_string(); });
             }
         })
         .unwrap();
 
     let backend = terminal.backend();
-    assert!(!backend.buffer()[(0, 0)].symbol.trim().is_empty());
+    assert!(!backend.buffer().get(0, 0).unwrap().symbol.trim().is_empty());
 }
 
 #[test]
@@ -181,17 +175,15 @@ fn test_paragraph_render() {
             let area = Rect::new(0, 0, 40, 10);
             let text = "Hello, World!";
             for (i, ch) in text.chars().take(area.width as usize).enumerate() {
-                if let Some(cell) = f.buffer_mut().get_mut(area.x + i as u16, area.y) {
-                    cell.symbol = ch.to_string();
-                }
+                f.buffer_mut().modify_cell(area.x + i as u16, area.y, |cell| { cell.symbol = ch.to_string(); });
             }
         })
         .unwrap();
 
     let backend = terminal.backend();
-    assert_eq!(backend.buffer()[(0, 0)].symbol, "H");
-    assert_eq!(backend.buffer()[(1, 0)].symbol, "e");
-    assert_eq!(backend.buffer()[(12, 0)].symbol, "!");
+    assert_eq!(backend.buffer().get(0, 0).unwrap().symbol, "H");
+    assert_eq!(backend.buffer().get(1, 0).unwrap().symbol, "e");
+    assert_eq!(backend.buffer().get(12, 0).unwrap().symbol, "!");
 }
 
 #[test]
@@ -213,16 +205,16 @@ fn test_terminal_scroll_operations() {
 
     terminal
         .draw(|f| {
-            f.buffer_mut()[(0, 0)].symbol = "A".to_string();
-            f.buffer_mut()[(0, 1)].symbol = "B".to_string();
+            f.buffer_mut().modify_cell(0, 0, |cell| { cell.symbol = "A".to_string(); });
+            f.buffer_mut().modify_cell(0, 1, |cell| { cell.symbol = "B".to_string(); });
         })
         .unwrap();
 
     terminal.scroll_up(1).unwrap();
 
     let backend = terminal.backend();
-    assert_eq!(backend.buffer()[(0, 0)].symbol, "B");
-    assert_eq!(backend.buffer()[(0, 1)].symbol, " ");
+    assert_eq!(backend.buffer().get(0, 0).unwrap().symbol, "B");
+    assert_eq!(backend.buffer().get(0, 1).unwrap().symbol, " ");
 }
 
 #[test]
@@ -261,7 +253,7 @@ fn test_empty_render() {
 
     for y in 0..frame.area.height {
         for x in 0..frame.area.width {
-            assert_eq!(frame.buffer[(x, y)].symbol, " ");
+            assert_eq!(frame.buffer.get(x, y).unwrap().symbol, " ");
         }
     }
 }
@@ -293,11 +285,11 @@ fn test_multiple_draw_cycles() {
     for i in 0..10 {
         terminal
             .draw(|f| {
-                f.buffer_mut()[(0, 0)].symbol = char::from(b'0' + (i % 10) as u8).to_string();
+                f.buffer_mut().modify_cell(0, 0, |cell| { cell.symbol = char::from(b'0' + (i % 10) as u8).to_string(); });
             })
             .unwrap();
     }
 
     let backend = terminal.backend();
-    assert_eq!(backend.buffer()[(0, 0)].symbol, "9");
+    assert_eq!(backend.buffer().get(0, 0).unwrap().symbol, "9");
 }

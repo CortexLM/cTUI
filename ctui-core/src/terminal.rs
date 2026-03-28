@@ -10,6 +10,7 @@ use std::ops::{Deref, DerefMut};
 use crate::backend::Backend;
 use crate::backend::{CursorConfig, CursorStyle};
 use crate::buffer::Buffer;
+use crate::cell::Cell;
 use crate::geometry::Rect;
 use crate::style::Color;
 
@@ -320,11 +321,14 @@ impl<B: Backend> Terminal<B> {
     pub fn clear_region(&mut self, area: Rect) -> io::Result<()> {
         for y in area.y..area.y.saturating_add(area.height) {
             for x in area.x..area.x.saturating_add(area.width) {
-                if let Some(cell) = self.buffers[self.current].get_mut(x, y) {
-                    cell.reset();
-                }
-                if let Some(cell) = self.prev_buffer_mut().get_mut(x, y) {
-                    cell.reset();
+                self.buffers[self.current].set(x, y, Cell::default());
+            }
+        }
+        {
+            let prev = self.prev_buffer_mut();
+            for y in area.y..area.y.saturating_add(area.height) {
+                for x in area.x..area.x.saturating_add(area.width) {
+                    prev.set(x, y, Cell::default());
                 }
             }
         }
@@ -609,15 +613,19 @@ mod tests {
 
         let result = terminal
             .draw(|f| {
-                f.buffer_mut()[(0, 0)].symbol = "A".to_string();
-                f.buffer_mut()[(1, 0)].symbol = "B".to_string();
+                f.buffer_mut().modify_cell(0, 0, |cell| {
+                    cell.symbol = "A".to_string();
+                });
+                f.buffer_mut().modify_cell(1, 0, |cell| {
+                    cell.symbol = "B".to_string();
+                });
             })
             .unwrap();
 
         assert_eq!(result.area.width, 80);
         assert_eq!(result.area.height, 24);
-        assert_eq!(terminal.current_buffer()[(0, 0)].symbol, "A");
-        assert_eq!(terminal.current_buffer()[(1, 0)].symbol, "B");
+        assert_eq!(terminal.current_buffer().get(0, 0).unwrap().symbol, "A");
+        assert_eq!(terminal.current_buffer().get(1, 0).unwrap().symbol, "B");
     }
 
     #[test]
@@ -632,18 +640,22 @@ mod tests {
 
         terminal
             .draw(|f| {
-                f.buffer_mut()[(0, 0)].symbol = "X".to_string();
+                f.buffer_mut().modify_cell(0, 0, |cell| {
+                    cell.symbol = "X".to_string();
+                });
             })
             .unwrap();
 
         terminal
             .draw(|f| {
-                f.buffer_mut()[(0, 0)].symbol = "Y".to_string();
+                f.buffer_mut().modify_cell(0, 0, |cell| {
+                    cell.symbol = "Y".to_string();
+                });
             })
             .unwrap();
 
-        assert_eq!(terminal.current_buffer()[(0, 0)].symbol, "Y");
-        assert_eq!(terminal.prev_buffer()[(0, 0)].symbol, "X");
+        assert_eq!(terminal.current_buffer().get(0, 0).unwrap().symbol, "Y");
+        assert_eq!(terminal.prev_buffer().get(0, 0).unwrap().symbol, "X");
     }
 
     #[test]
@@ -671,9 +683,9 @@ mod tests {
             fn render(self, area: Rect, buffer: &mut Buffer) {
                 for y in area.y..area.y + area.height {
                     for x in area.x..area.x + area.width {
-                        if let Some(cell) = buffer.get_mut(x, y) {
+                        buffer.modify_cell(x, y, |cell| {
                             cell.symbol = "X".to_string();
-                        }
+                        });
                     }
                 }
             }
@@ -682,9 +694,9 @@ mod tests {
         let widget_area = Rect::new(5, 5, 10, 5);
         frame.render_widget(TestWidget, widget_area);
 
-        assert_eq!(frame.buffer[(5, 5)].symbol, "X");
-        assert_eq!(frame.buffer[(14, 9)].symbol, "X");
-        assert_eq!(frame.buffer[(0, 0)].symbol, " ");
+        assert_eq!(frame.buffer.get(5, 5).unwrap().symbol, "X");
+        assert_eq!(frame.buffer.get(14, 9).unwrap().symbol, "X");
+        assert_eq!(frame.buffer.get(0, 0).unwrap().symbol, " ");
     }
 
     #[test]
@@ -702,18 +714,22 @@ mod tests {
 
         terminal
             .draw(|f| {
-                f.buffer_mut()[(0, 0)].symbol = "A".to_string();
+                f.buffer_mut().modify_cell(0, 0, |cell| {
+                    cell.symbol = "A".to_string();
+                });
             })
             .unwrap();
 
         terminal
             .draw(|f| {
-                f.buffer_mut()[(0, 0)].symbol = "B".to_string();
+                f.buffer_mut().modify_cell(0, 0, |cell| {
+                    cell.symbol = "B".to_string();
+                });
             })
             .unwrap();
 
-        assert_eq!(terminal.current_buffer()[(0, 0)].symbol, "B");
-        assert_eq!(terminal.prev_buffer()[(0, 0)].symbol, "A");
+        assert_eq!(terminal.current_buffer().get(0, 0).unwrap().symbol, "B");
+        assert_eq!(terminal.prev_buffer().get(0, 0).unwrap().symbol, "A");
     }
 
     #[test]
@@ -722,12 +738,14 @@ mod tests {
 
         terminal
             .draw(|f| {
-                f.buffer_mut()[(0, 0)].symbol = "A".to_string();
+                f.buffer_mut().modify_cell(0, 0, |cell| {
+                    cell.symbol = "A".to_string();
+                });
             })
             .unwrap();
 
         let backend = terminal.backend();
-        assert!(backend.buffer()[(0, 0)].symbol == "A");
+        assert!(backend.buffer().get(0, 0).unwrap().symbol == "A");
     }
 
     #[test]
@@ -736,13 +754,15 @@ mod tests {
 
         let frame = terminal
             .draw(|f| {
-                f.buffer_mut()[(10, 5)].symbol = "Z".to_string();
+                f.buffer_mut().modify_cell(10, 5, |cell| {
+                    cell.symbol = "Z".to_string();
+                });
             })
             .unwrap();
 
         assert_eq!(frame.area.width, 80);
         assert_eq!(frame.area.height, 24);
-        assert_eq!(frame.buffer[(10, 5)].symbol, "Z");
+        assert_eq!(frame.buffer.get(10, 5).unwrap().symbol, "Z");
     }
 
     #[test]
@@ -751,14 +771,16 @@ mod tests {
 
         terminal
             .draw(|f| {
-                f.buffer_mut()[(0, 0)].symbol = "X".to_string();
+                f.buffer_mut().modify_cell(0, 0, |cell| {
+                    cell.symbol = "X".to_string();
+                });
             })
             .unwrap();
 
         terminal.clear().unwrap();
 
-        assert_eq!(terminal.current_buffer()[(0, 0)].symbol, " ");
-        assert_eq!(terminal.prev_buffer()[(0, 0)].symbol, " ");
+        assert_eq!(terminal.current_buffer().get(0, 0).unwrap().symbol, " ");
+        assert_eq!(terminal.prev_buffer().get(0, 0).unwrap().symbol, " ");
     }
 
     // ===== Lifecycle Tests =====
@@ -809,7 +831,7 @@ mod tests {
         assert!(terminal.is_mounted::<TestComponentA>());
         assert!(terminal.is_mounted::<TestComponentB>());
 
-        terminal.unmount_component::<TestComponentA>();
+        let _ = terminal.unmount_component::<TestComponentA>();
         assert!(!terminal.is_mounted::<TestComponentA>());
         assert!(terminal.is_mounted::<TestComponentB>());
     }

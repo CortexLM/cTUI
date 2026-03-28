@@ -58,10 +58,10 @@
 //!         // Render text starting from top-left
 //!         for (i, ch) in self.text.chars().take(area.width as usize).enumerate() {
 //!             let x = area.x + i as u16;
-//!             if let Some(cell) = buf.get_mut(x, area.y) {
+//!             buf.modify_cell(x, area.y, |cell| {
 //!                 cell.symbol = ch.to_string();
 //!                 cell.set_style(self.style);
-//!             }
+//!             });
 //!         }
 //!     }
 //!
@@ -271,9 +271,9 @@ impl Default for Cmd {
 ///     fn render(&self, area: Rect, buf: &mut Buffer) {
 ///         let text = format!("Count: {}", self.count);
 ///         for (i, ch) in text.chars().take(area.width as usize).enumerate() {
-///             if let Some(cell) = buf.get_mut(area.x + i as u16, area.y) {
+///             buf.modify_cell(area.x + i as u16, area.y, |cell| {
 ///                 cell.symbol = ch.to_string();
-///             }
+///             });
 ///         }
 ///     }
 ///
@@ -464,9 +464,9 @@ mod tests {
         }
 
         fn render(&self, area: Rect, buf: &mut Buffer) {
-            if let Some(cell) = buf.get_mut(area.x, area.y) {
+            buf.modify_cell(area.x, area.y, |cell| {
                 cell.symbol = self.value.to_string();
-            }
+            });
         }
 
         fn update(&mut self, _msg: Box<dyn Msg>) -> Cmd {
@@ -525,7 +525,7 @@ mod tests {
 
         component.render(Rect::new(0, 0, 10, 1), &mut buf);
 
-        assert_eq!(buf[(0, 0)].symbol, "7");
+        assert_eq!(buf.get(0, 0).unwrap().symbol, "7");
     }
 
     #[test]
@@ -585,15 +585,15 @@ mod tests {
     #[test]
     fn test_static_component() {
         let component = StaticComponent::new(|area, buf| {
-            if let Some(cell) = buf.get_mut(area.x, area.y) {
+            buf.modify_cell(area.x, area.y, |cell| {
                 cell.symbol = "S".to_string();
-            }
+            });
         });
 
         let mut buf = Buffer::empty(Rect::new(0, 0, 10, 1));
         component.render(Rect::new(0, 0, 10, 1), &mut buf);
 
-        assert_eq!(buf[(0, 0)].symbol, "S");
+        assert_eq!(buf.get(0, 0).unwrap().symbol, "S");
     }
 
     #[test]
@@ -635,9 +635,10 @@ mod tests {
         fn render(&self, area: Rect, buf: &mut Buffer) {
             let text = format!("{}: {}ms", self.label, self.elapsed_ms);
             for (i, ch) in text.chars().take(area.width as usize).enumerate() {
-                if let Some(cell) = buf.get_mut(area.x + i as u16, area.y) {
+                let x = area.x + i as u16;
+                buf.modify_cell(x, area.y, |cell| {
                     cell.symbol = ch.to_string();
-                }
+                });
             }
         }
 
@@ -674,7 +675,7 @@ mod tests {
         component.render(Rect::new(0, 0, 50, 1), &mut buf);
 
         // Check render output starts with label
-        assert!(buf[(0, 0)].symbol.starts_with("T"));
+        assert!(buf.get(0, 0).unwrap().symbol.starts_with("T"));
 
         component.on_unmount();
     }
@@ -698,9 +699,10 @@ mod tests {
 
         fn render(&self, area: Rect, buf: &mut Buffer) {
             for (i, ch) in self.text.chars().take(area.width as usize).enumerate() {
-                if let Some(cell) = buf.get_mut(area.x + i as u16, area.y) {
+                let x = area.x + i as u16;
+                buf.modify_cell(x, area.y, |cell| {
                     cell.symbol = ch.to_string();
-                }
+                });
             }
         }
 
@@ -718,8 +720,8 @@ mod tests {
         let mut buf = Buffer::empty(Rect::new(0, 0, 10, 1));
         component.render(Rect::new(0, 0, 10, 1), &mut buf);
 
-        assert_eq!(buf[(0, 0)].symbol, "H");
-        assert_eq!(buf[(1, 0)].symbol, "e");
+        assert_eq!(buf.get(0, 0).unwrap().symbol, "H");
+        assert_eq!(buf.get(1, 0).unwrap().symbol, "e");
 
         let cmd = component.update(Box::new(()));
         assert_eq!(cmd, Cmd::Noop);

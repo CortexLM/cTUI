@@ -179,9 +179,9 @@ impl<W: Write> CrosstermBackend<W> {
 }
 
 impl<W: Write> Backend for CrosstermBackend<W> {
-    fn draw<'a, I>(&mut self, content: I) -> io::Result<()>
+    fn draw<I>(&mut self, content: I) -> io::Result<()>
     where
-        I: Iterator<Item = (u16, u16, &'a Cell)>,
+        I: Iterator<Item = (u16, u16, Cell)>,
     {
         for (x, y, cell) in content {
             if cell.skip {
@@ -189,7 +189,7 @@ impl<W: Write> Backend for CrosstermBackend<W> {
             }
 
             self.move_cursor_if_needed(x, y)?;
-            self.update_style(cell)?;
+            self.update_style(&cell)?;
             queue!(self.writer, Print(&cell.symbol))?;
         }
         Ok(())

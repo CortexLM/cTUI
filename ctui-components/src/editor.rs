@@ -545,36 +545,34 @@ impl Textarea {
                 let x = area.x + col_idx as u16;
                 let chars: Vec<char> = line.chars().collect();
 
-                if let Some(cell) = buf.get_mut(x, y) {
+                buf.modify_cell(x, y, |cell| {
                     if col_offset < chars.len() {
-                        cell.symbol = chars[col_offset].to_string();
-
-                        let in_selection = self
-                            .selection
-                            .as_ref()
-                            .map_or(false, |s| s.contains(row_offset, col_offset));
-                        let is_cursor =
-                            row_offset == self.cursor_row && col_offset == self.cursor_col;
-
-                        if is_cursor {
-                            cell.set_style(self.cursor_style);
-                        } else if in_selection {
-                            cell.set_style(self.selection_style);
-                        } else {
-                            cell.set_style(self.style);
-                        }
-                    } else {
-                        cell.symbol = " ".to_string();
-                        cell.set_style(self.style);
-                    }
-                }
-            }
-
-            if let Some(cell) = buf.get_mut(area.x + line.chars().count() as u16, y) {
-                if row_offset == self.cursor_row && self.cursor_col == line.chars().count() {
+                    cell.symbol = chars[col_offset].to_string();
+                    let in_selection = self
+                    .selection
+                    .as_ref()
+                    .map_or(false, |s| s.contains(row_offset, col_offset));
+                    let is_cursor =
+                    row_offset == self.cursor_row && col_offset == self.cursor_col;
+                    if is_cursor {
                     cell.set_style(self.cursor_style);
-                }
+                    } else if in_selection {
+                    cell.set_style(self.selection_style);
+                    } else {
+                    cell.set_style(self.style);
+                    }
+                    } else {
+                    cell.symbol = " ".to_string();
+                    cell.set_style(self.style);
+                    }
+                });
             }
+
+            buf.modify_cell(area.x + line.chars().count() as u16, y, |cell| {
+                if row_offset == self.cursor_row && self.cursor_col == line.chars().count() {
+                cell.set_style(self.cursor_style);
+                }
+            });
         }
     }
 

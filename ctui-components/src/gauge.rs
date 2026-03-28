@@ -159,18 +159,18 @@ impl Widget for Gauge {
                         && buf_y >= area.y
                         && buf_y < area.y + area.height
                     {
-                        if let Some(cell) = buf.get_mut(buf_x, buf_y) {
+                        buf.modify_cell(buf_x, buf_y, |cell| {
                             cell.symbol = if is_filled { "█" } else { "░" }.to_string();
                             cell.set_style(style);
-                        }
+                        });
                     }
 
                     let mirror_x = center_x + (x_offset as f64 - outer_r) as u16;
                     if mirror_x < area.x + area.width {
-                        if let Some(cell) = buf.get_mut(mirror_x, buf_y) {
+                        buf.modify_cell(mirror_x, buf_y, |cell| {
                             cell.symbol = if is_filled { "█" } else { "░" }.to_string();
                             cell.set_style(style);
-                        }
+                        });
                     }
                 }
             }
@@ -184,10 +184,10 @@ impl Widget for Gauge {
         for (i, ch) in label.chars().enumerate() {
             let x = label_x + i as u16;
             if x < area.x + area.width {
-                if let Some(cell) = buf.get_mut(x, label_y) {
+                buf.modify_cell(x, label_y, |cell| {
                     cell.symbol = ch.to_string();
                     cell.set_style(self.style);
-                }
+                });
             }
         }
     }
@@ -258,15 +258,15 @@ impl Widget for LinearGauge {
 
         for x in 0..area.width {
             let buf_x = area.x + x;
-            if let Some(cell) = buf.get_mut(buf_x, area.y) {
+            buf.modify_cell(buf_x, area.y, |cell| {
                 if x < filled_width {
-                    cell.symbol = "█".to_string();
-                    cell.set_style(self.filled_style);
+                cell.symbol = "█".to_string();
+                cell.set_style(self.filled_style);
                 } else {
-                    cell.symbol = "░".to_string();
-                    cell.set_style(self.style);
+                cell.symbol = "░".to_string();
+                cell.set_style(self.style);
                 }
-            }
+            });
         }
 
         let label = if self.show_percent {
@@ -284,10 +284,10 @@ impl Widget for LinearGauge {
             for (i, ch) in label.chars().enumerate() {
                 let x_pos = label_x + i as u16;
                 if x_pos < area.x + area.width {
-                    if let Some(cell) = buf.get_mut(x_pos, label_y) {
+                    buf.modify_cell(x_pos, label_y, |cell| {
                         cell.symbol = ch.to_string();
                         cell.set_style(self.style);
-                    }
+                    });
                 }
             }
         }

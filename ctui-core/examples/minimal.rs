@@ -29,9 +29,9 @@ fn main() -> Result<(), io::Error> {
         terminal.draw(|frame| {
             let buffer = frame.buffer_mut();
             for (i, ch) in "Hello, cTUI!".chars().enumerate() {
-                if let Some(cell) = buffer.get_mut(i as u16, 0) {
+                buffer.modify_cell(i as u16, 0, |cell| {
                     cell.symbol = ch.to_string();
-                }
+                });
             }
         })?;
 

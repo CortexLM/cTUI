@@ -455,18 +455,16 @@ impl Widget for Markdown {
                     break;
                 }
 
-                if let Some(cell) = buf.get_mut(term_x, y) {
+                buf.modify_cell(term_x, y, |cell| {
                     cell.symbol = ch.to_string();
                     cell.set_style(char_style);
-                }
+                });
 
                 if ch_width > 1 {
                     for i in 1..ch_width {
                         let next_x = term_x + i as u16;
                         if next_x < area.x + area.width {
-                            if let Some(cell) = buf.get_mut(next_x, y) {
-                                cell.skip = true;
-                            }
+                            buf.modify_cell(next_x, y, |cell| { cell.skip = true; });
                         }
                     }
                 }
@@ -781,7 +779,7 @@ mod tests {
         let mut output = String::new();
         for y in 0..height {
             for x in 0..width {
-                output.push_str(&buf[(x, y)].symbol);
+                if let Some(cell) = buf.get(x, y) { output.push_str(&cell.symbol); }
             }
             if y < height - 1 {
                 output.push('\n');
@@ -1112,9 +1110,9 @@ code here
         let mut buf = Buffer::empty(Rect::new(0, 0, 15, 3));
         md.render(Rect::new(0, 0, 15, 3), &mut buf);
 
-        assert_eq!(buf[(0, 0)].symbol, "#");
-        assert_eq!(buf[(1, 0)].symbol, " ");
-        assert_eq!(buf[(2, 0)].symbol, "T");
+        assert_eq!(buf.get(0, 0).unwrap().symbol, "#");
+        assert_eq!(buf.get(1, 0).unwrap().symbol, " ");
+        assert_eq!(buf.get(2, 0).unwrap().symbol, "T");
     }
 
     #[test]

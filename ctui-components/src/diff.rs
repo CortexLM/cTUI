@@ -482,10 +482,10 @@ impl DiffViewer {
         let gutter_width = if self.show_line_numbers { 8 } else { 2 }; // Space for prefix + number
 
         // Render prefix
-        if let Some(cell) = buf.get_mut(x, y) {
+        buf.modify_cell(x, y, |cell| {
             cell.symbol = prefix.to_string();
             cell.set_style(style);
-        }
+        });
         x += 1;
 
         // Render line number
@@ -497,17 +497,17 @@ impl DiffViewer {
                     DiffLine::Added(_) => format!("{:4}", new_num),
                 };
                 for ch in num_str.chars() {
-                    if let Some(cell) = buf.get_mut(x, y) {
+                    buf.modify_cell(x, y, |cell| {
                         cell.symbol = ch.to_string();
                         cell.set_style(self.line_number_style);
-                    }
+                    });
                     x += 1;
                 }
                 // Space
-                if let Some(cell) = buf.get_mut(x, y) {
+                buf.modify_cell(x, y, |cell| {
                     cell.symbol = " ".to_string();
                     cell.set_style(self.line_number_style);
-                }
+                });
                 x += 1;
             }
         }
@@ -521,19 +521,19 @@ impl DiffViewer {
             if x >= x_start + width {
                 break;
             }
-            if let Some(cell) = buf.get_mut(x, y) {
+            buf.modify_cell(x, y, |cell| {
                 cell.symbol = ch.to_string();
                 cell.set_style(style);
-            }
+            });
             x += 1;
         }
 
         // Fill remaining with styled spaces
         while x < x_start + width {
-            if let Some(cell) = buf.get_mut(x, y) {
+            buf.modify_cell(x, y, |cell| {
                 cell.symbol = " ".to_string();
                 cell.set_style(style);
-            }
+            });
             x += 1;
         }
     }
@@ -559,18 +559,18 @@ impl DiffViewer {
                 let header = hunk.header();
                 let mut x = area.x;
                 for ch in header.chars().take(area.width as usize) {
-                    if let Some(cell) = buf.get_mut(x, y) {
+                    buf.modify_cell(x, y, |cell| {
                         cell.symbol = ch.to_string();
                         cell.set_style(self.header_style);
-                    }
+                    });
                     x += 1;
                 }
                 // Fill rest of line
                 while x < area.x + area.width {
-                    if let Some(cell) = buf.get_mut(x, y) {
+                    buf.modify_cell(x, y, |cell| {
                         cell.symbol = " ".to_string();
                         cell.set_style(self.header_style);
-                    }
+                    });
                     x += 1;
                 }
                 y += 1;
@@ -642,10 +642,10 @@ impl DiffViewer {
         // Draw divider
         for y in area.y..area.y + area.height {
             let x = area.x + half_width;
-            if let Some(cell) = buf.get_mut(x, y) {
+            buf.modify_cell(x, y, |cell| {
                 cell.symbol = "│".to_string();
                 cell.set_style(Style::default().fg(Color::DarkGray));
-            }
+            });
         }
 
         // Render left and right sides
@@ -663,20 +663,20 @@ impl DiffViewer {
                 // Left side
                 let mut x = left_area.x;
                 for ch in header.chars().take(left_area.width as usize) {
-                    if let Some(cell) = buf.get_mut(x, y) {
+                    buf.modify_cell(x, y, |cell| {
                         cell.symbol = ch.to_string();
                         cell.set_style(self.header_style);
-                    }
+                    });
                     x += 1;
                 }
 
                 // Right side
                 x = right_area.x;
                 for ch in header.chars().take(right_area.width as usize) {
-                    if let Some(cell) = buf.get_mut(x, y) {
+                    buf.modify_cell(x, y, |cell| {
                         cell.symbol = ch.to_string();
                         cell.set_style(self.header_style);
-                    }
+                    });
                     x += 1;
                 }
 
@@ -797,10 +797,10 @@ impl DiffViewer {
             if x >= x_start + width {
                 break;
             }
-            if let Some(cell) = buf.get_mut(x, y) {
+            buf.modify_cell(x, y, |cell| {
                 cell.symbol = " ".to_string();
                 cell.set_style(style);
-            }
+            });
             x += 1;
         }
 
@@ -812,19 +812,19 @@ impl DiffViewer {
             if x >= x_start + width {
                 break;
             }
-            if let Some(cell) = buf.get_mut(x, y) {
+            buf.modify_cell(x, y, |cell| {
                 cell.symbol = ch.to_string();
                 cell.set_style(style);
-            }
+            });
             x += 1;
         }
 
         // Fill remaining
         while x < x_start + width {
-            if let Some(cell) = buf.get_mut(x, y) {
+            buf.modify_cell(x, y, |cell| {
                 cell.symbol = " ".to_string();
                 cell.set_style(style);
-            }
+            });
             x += 1;
         }
     }
@@ -934,7 +934,7 @@ mod tests {
         let mut output = String::new();
         for y in 0..height {
             for x in 0..width {
-                output.push_str(&buf[(x, y)].symbol);
+                if let Some(cell) = buf.get(x, y) { output.push_str(&cell.symbol); }
             }
             if y < height - 1 {
                 output.push('\n');

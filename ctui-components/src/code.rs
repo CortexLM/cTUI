@@ -1041,9 +1041,7 @@ impl Component for Code {
         if let Some(bg) = self.theme.background {
             for y in area.y..(area.y + area.height) {
                 for x in area.x..(area.x + area.width) {
-                    if let Some(cell) = buf.get_mut(x, y) {
-                        cell.set_style(Style::new().bg(bg));
-                    }
+                    buf.modify_cell(x, y, |cell| { cell.set_style(Style::new().bg(bg)); });
                 }
             }
         }
@@ -1071,9 +1069,7 @@ impl Component for Code {
                 if line_idx + 1 == hl {
                     if let Some(hl_bg) = self.theme.line_highlight_bg {
                         for x in code_area.x..(code_area.x + code_area.width) {
-                            if let Some(cell) = buf.get_mut(x, y) {
-                                cell.set_style(Style::new().bg(hl_bg));
-                            }
+                            buf.modify_cell(x, y, |cell| { cell.set_style(Style::new().bg(hl_bg)); });
                         }
                     }
                 }
@@ -1092,9 +1088,7 @@ impl Component for Code {
                 };
                 if let Some(bg) = bg {
                     for x in code_area.x..(code_area.x + code_area.width) {
-                        if let Some(cell) = buf.get_mut(x, y) {
-                            cell.set_style(Style::new().bg(bg));
-                        }
+                        buf.modify_cell(x, y, |cell| { cell.set_style(Style::new().bg(bg)); });
                     }
                 }
             }
@@ -1114,40 +1108,36 @@ impl Component for Code {
 
                     let ch_width = UnicodeWidthStr::width(ch.to_string().as_str());
 
-                    if let Some(cell) = buf.get_mut(term_x, y) {
+                    buf.modify_cell(term_x, y, |cell| {
                         cell.symbol = ch.to_string();
-
                         let final_style = if diff_marker != DiffMarker::None {
-                            let bg = match diff_marker {
-                                DiffMarker::Add => self.theme.diff_add_bg,
-                                DiffMarker::Remove => self.theme.diff_remove_bg,
-                                DiffMarker::None => self.theme.background,
-                            };
-                            Style {
-                                fg: token_style.fg,
-                                bg: bg.unwrap_or(Color::Reset),
-                                modifier: token_style.modifier,
-                            }
-                        } else if self.highlight_line == Some(line_idx + 1) {
-                            Style {
-                                fg: token_style.fg,
-                                bg: self.theme.line_highlight_bg.unwrap_or(Color::Reset),
-                                modifier: token_style.modifier,
-                            }
-                        } else {
-                            token_style
+                        let bg = match diff_marker {
+                        DiffMarker::Add => self.theme.diff_add_bg,
+                        DiffMarker::Remove => self.theme.diff_remove_bg,
+                        DiffMarker::None => self.theme.background,
                         };
-
+                        Style {
+                        fg: token_style.fg,
+                        bg: bg.unwrap_or(Color::Reset),
+                        modifier: token_style.modifier,
+                        }
+                        } else if self.highlight_line == Some(line_idx + 1) {
+                        Style {
+                        fg: token_style.fg,
+                        bg: self.theme.line_highlight_bg.unwrap_or(Color::Reset),
+                        modifier: token_style.modifier,
+                        }
+                        } else {
+                        token_style
+                        };
                         cell.set_style(final_style);
-                    }
+                    });
 
                     if ch_width > 1 {
                         for i in 1..ch_width {
                             let next_x = term_x + i as u16;
                             if next_x < code_area.x + code_area.width {
-                                if let Some(cell) = buf.get_mut(next_x, y) {
-                                    cell.skip = true;
-                                }
+                                buf.modify_cell(next_x, y, |cell| { cell.skip = true; });
                             }
                         }
                     }
@@ -1171,9 +1161,7 @@ impl Code {
         if let Some(bg) = self.theme.gutter_bg {
             for y in area.y..(area.y + area.height) {
                 for x in area.x..(area.x + gutter_width as u16) {
-                    if let Some(cell) = buf.get_mut(x, y) {
-                        cell.set_style(Style::new().bg(bg).fg(self.theme.gutter_fg));
-                    }
+                    buf.modify_cell(x, y, |cell| { cell.set_style(Style::new().bg(bg).fg(self.theme.gutter_fg)); });
                 }
             }
         }
@@ -1204,10 +1192,10 @@ impl Code {
             for (i, ch) in line_num.chars().enumerate() {
                 let x = area.x + (x_offset + i) as u16;
                 if x < area.x + gutter_width as u16 {
-                    if let Some(cell) = buf.get_mut(x, y) {
+                    buf.modify_cell(x, y, |cell| {
                         cell.symbol = ch.to_string();
                         cell.set_style(num_style);
-                    }
+                    });
                 }
             }
 
@@ -1219,15 +1207,15 @@ impl Code {
                 };
                 let marker_x = area.x + gutter_width as u16;
                 if marker_x < area.x + area.width {
-                    if let Some(cell) = buf.get_mut(marker_x, y) {
+                    buf.modify_cell(marker_x, y, |cell| {
                         cell.symbol = marker_char.to_string();
                         let marker_style = match marker {
-                            DiffMarker::Add => Style::new().fg(self.theme.string),
-                            DiffMarker::Remove => Style::new().fg(self.theme.keyword),
-                            DiffMarker::None => Style::new().fg(self.theme.gutter_fg),
+                        DiffMarker::Add => Style::new().fg(self.theme.string),
+                        DiffMarker::Remove => Style::new().fg(self.theme.keyword),
+                        DiffMarker::None => Style::new().fg(self.theme.gutter_fg),
                         };
                         cell.set_style(marker_style);
-                    }
+                    });
                 }
             }
         }
@@ -1470,7 +1458,7 @@ mod tests {
         let mut output = String::new();
         for y in 0..height {
             for x in 0..width {
-                output.push_str(&buf[(x, y)].symbol);
+                if let Some(cell) = buf.get(x, y) { output.push_str(&cell.symbol); }
             }
             if y < height - 1 {
                 output.push('\n');

@@ -203,34 +203,34 @@ impl Tabs {
         let suffix = " ";
 
         for (i, ch) in prefix.chars().enumerate() {
-            if let Some(cell) = buf.get_mut(x + i as u16, y) {
+            buf.modify_cell(x + i as u16, y, |cell| {
                 cell.symbol = ch.to_string();
                 cell.set_style(if is_selected {
-                    self.selected_style
+                self.selected_style
                 } else {
-                    self.style
+                self.style
                 });
-            }
+            });
         }
 
         let label_start = x + prefix.len() as u16;
         for (i, ch) in tab.label.chars().enumerate() {
-            if let Some(cell) = buf.get_mut(label_start + i as u16, y) {
+            buf.modify_cell(label_start + i as u16, y, |cell| {
                 cell.symbol = ch.to_string();
                 cell.set_style(tab.style);
-            }
+            });
         }
 
         let suffix_start = label_start + tab.label.chars().count() as u16;
         for (i, ch) in suffix.chars().enumerate() {
-            if let Some(cell) = buf.get_mut(suffix_start + i as u16, y) {
+            buf.modify_cell(suffix_start + i as u16, y, |cell| {
                 cell.symbol = ch.to_string();
                 cell.set_style(if is_selected {
-                    self.selected_style
+                self.selected_style
                 } else {
-                    self.style
+                self.style
                 });
-            }
+            });
         }
 
         (prefix.len() + tab.label.chars().count() + suffix.len()) as u16
@@ -238,10 +238,10 @@ impl Tabs {
 
     fn render_divider(&self, x: u16, y: u16, buf: &mut Buffer) -> u16 {
         for (i, ch) in self.divider.chars().enumerate() {
-            if let Some(cell) = buf.get_mut(x + i as u16, y) {
+            buf.modify_cell(x + i as u16, y, |cell| {
                 cell.symbol = ch.to_string();
                 cell.set_style(self.style);
-            }
+            });
         }
         self.divider.chars().count() as u16
     }
@@ -347,22 +347,22 @@ impl Component for Tabs {
             if i == self.selected && self.highlight_style != Style::default() {
                 let tab_width = tab.label.chars().count() as u16 + 2;
                 for x in current_x..current_x + tab_width {
-                    if let Some(cell) = buf.get_mut(x, area.y) {
+                    buf.modify_cell(x, area.y, |cell| {
                         let merged = Style {
-                            fg: if self.highlight_style.fg != ctui_core::style::Color::Reset {
-                                self.highlight_style.fg
-                            } else {
-                                cell.fg
-                            },
-                            bg: if self.highlight_style.bg != ctui_core::style::Color::Reset {
-                                self.highlight_style.bg
-                            } else {
-                                cell.bg
-                            },
-                            modifier: cell.modifier | self.highlight_style.modifier,
+                        fg: if self.highlight_style.fg != ctui_core::style::Color::Reset {
+                        self.highlight_style.fg
+                        } else {
+                        cell.fg
+                        },
+                        bg: if self.highlight_style.bg != ctui_core::style::Color::Reset {
+                        self.highlight_style.bg
+                        } else {
+                        cell.bg
+                        },
+                        modifier: cell.modifier | self.highlight_style.modifier,
                         };
                         cell.set_style(merged);
-                    }
+                    });
                 }
             }
 
@@ -393,7 +393,7 @@ mod tests {
         let mut output = String::new();
         for y in 0..height {
             for x in 0..width {
-                output.push_str(&buf[(x, y)].symbol);
+                if let Some(cell) = buf.get(x, y) { output.push_str(&cell.symbol); }
             }
             if y < height - 1 {
                 output.push('\n');

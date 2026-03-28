@@ -186,26 +186,26 @@ impl Component for ProgressBar {
 
         // Render filled portion
         for x in 0..filled_width.min(width) {
-            if let Some(cell) = buf.get_mut(area.x + x as u16, area.y) {
+            buf.modify_cell(area.x + x as u16, area.y, |cell| {
                 cell.symbol = FILLED_CHAR.to_string();
                 cell.set_style(self.style);
-            }
+            });
         }
 
         // Render partial character
         if filled_width < width {
-            if let Some(cell) = buf.get_mut(area.x + filled_width as u16, area.y) {
+            buf.modify_cell(area.x + filled_width as u16, area.y, |cell| {
                 cell.symbol = PARTIAL_CHARS[partial_idx].to_string();
                 cell.set_style(self.style);
-            }
+            });
         }
 
         // Render track (empty portion)
         for x in (filled_width + 1).min(width)..width {
-            if let Some(cell) = buf.get_mut(area.x + x as u16, area.y) {
+            buf.modify_cell(area.x + x as u16, area.y, |cell| {
                 cell.symbol = TRACK_CHAR.to_string();
                 cell.set_style(self.track_style);
-            }
+            });
         }
 
         // Render centered text if we have something to display
@@ -223,16 +223,16 @@ impl Component for ProgressBar {
                 if x_pos >= width {
                     break;
                 }
-                if let Some(cell) = buf.get_mut(area.x + x_pos as u16, area.y) {
+                buf.modify_cell(area.x + x_pos as u16, area.y, |cell| {
                     cell.symbol = ch.to_string();
                     // Determine style based on position
                     let use_filled_style = x_pos < filled_width;
                     cell.set_style(if use_filled_style {
-                        self.style
+                    self.style
                     } else {
-                        self.track_style
+                    self.track_style
                     });
-                }
+                });
             }
         }
     }
@@ -462,10 +462,10 @@ impl Component for Spinner {
             if i >= area.width as usize {
                 break;
             }
-            if let Some(cell) = buf.get_mut(area.x + i as u16, area.y) {
+            buf.modify_cell(area.x + i as u16, area.y, |cell| {
                 cell.symbol = ch.to_string();
                 cell.set_style(self.style);
-            }
+            });
         }
     }
 
@@ -489,7 +489,7 @@ mod tests {
         let mut output = String::new();
         for y in 0..height {
             for x in 0..width {
-                output.push_str(&buf[(x, y)].symbol);
+                if let Some(cell) = buf.get(x, y) { output.push_str(&cell.symbol); }
             }
             if y < height - 1 {
                 output.push('\n');
@@ -505,7 +505,7 @@ mod tests {
         let mut output = String::new();
         for y in 0..height {
             for x in 0..width {
-                output.push_str(&buf[(x, y)].symbol);
+                if let Some(cell) = buf.get(x, y) { output.push_str(&cell.symbol); }
             }
             if y < height - 1 {
                 output.push('\n');

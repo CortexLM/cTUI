@@ -89,9 +89,7 @@ impl Component for TodoApp {
 
         for (row, line) in lines.iter().enumerate() {
             for (col, ch) in line.chars().enumerate() {
-                if let Some(cell) = buf.get_mut(area.x + col as u16, area.y + row as u16) {
-                    cell.symbol = ch.to_string();
-                }
+                buf.modify_cell(area.x + col as u16, area.y + row as u16, |cell| { cell.symbol = ch.to_string(); });
             }
         }
 
@@ -100,11 +98,9 @@ impl Component for TodoApp {
             let check = if item.completed { "[x]" } else { "[ ]" };
             let text = format!("║ {} {} {}", idx + 1, check, item.text);
             for (col, ch) in text.chars().enumerate() {
-                if let Some(cell) =
-                    buf.get_mut(area.x + col as u16, area.y + item_start_row + idx as u16)
-                {
+                buf.modify_cell(area.x + col as u16, area.y + item_start_row + idx as u16, |cell| {
                     cell.symbol = ch.to_string();
-                }
+                });
             }
         }
     }

@@ -370,10 +370,10 @@ impl<C: Component> TabController<C> {
             let suffix = " ";
 
             if current_x < area.x + area.width {
-                if let Some(cell) = buf.get_mut(current_x, area.y) {
+                buf.modify_cell(current_x, area.y, |cell| {
                     cell.symbol = prefix.chars().next().unwrap_or(' ').to_string();
                     cell.set_style(style);
-                }
+                });
             }
 
             let mut char_pos = 0;
@@ -381,19 +381,19 @@ impl<C: Component> TabController<C> {
                 if current_x + 1 + char_pos >= area.x + area.width {
                     break;
                 }
-                if let Some(cell) = buf.get_mut(current_x + 1 + char_pos, area.y) {
+                buf.modify_cell(current_x + 1 + char_pos, area.y, |cell| {
                     cell.symbol = ch.to_string();
                     cell.set_style(style);
-                }
+                });
                 char_pos += 1;
             }
 
             let label_len = tab.label.chars().count() as u16;
             if current_x + 1 + label_len < area.x + area.width {
-                if let Some(cell) = buf.get_mut(current_x + 1 + label_len, area.y) {
+                buf.modify_cell(current_x + 1 + label_len, area.y, |cell| {
                     cell.symbol = suffix.chars().next().unwrap_or(' ').to_string();
                     cell.set_style(style);
-                }
+                });
             }
 
             current_x += label_len + 2;
@@ -433,9 +433,7 @@ mod tests {
         }
 
         fn render(&self, area: Rect, buf: &mut Buffer) {
-            if let Some(cell) = buf.get_mut(area.x, area.y) {
-                cell.symbol = self.value.to_string();
-            }
+            buf.modify_cell(area.x, area.y, |cell| { cell.symbol = self.value.to_string(); });
         }
 
         fn update(&mut self, _msg: Box<dyn Msg>) -> Cmd {

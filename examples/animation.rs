@@ -75,43 +75,35 @@ impl Component for AnimationDemo {
         let divider = "╠══════════════════════════════════════════════──────╣";
 
         for (col, ch) in header.chars().enumerate() {
-            if let Some(cell) = buf.get_mut(area.x + col as u16, area.y) {
-                cell.symbol = ch.to_string();
-            }
+            buf.modify_cell(area.x + col as u16, area.y, |cell| { cell.symbol = ch.to_string(); });
         }
 
         for (col, ch) in title.chars().enumerate() {
-            if let Some(cell) = buf.get_mut(area.x + col as u16, area.y + 1) {
-                cell.symbol = ch.to_string();
-            }
+            buf.modify_cell(area.x + col as u16, area.y + 1, |cell| { cell.symbol = ch.to_string(); });
         }
 
         for (col, ch) in divider.chars().enumerate() {
-            if let Some(cell) = buf.get_mut(area.x + col as u16, area.y + 2) {
-                cell.symbol = ch.to_string();
-            }
+            buf.modify_cell(area.x + col as u16, area.y + 2, |cell| { cell.symbol = ch.to_string(); });
         }
 
         let progress_bar_y = 4;
         let progress_text = format!("Progress: {:5.1}%", self.state.progress * 100.0);
         for (col, ch) in progress_text.chars().enumerate() {
-            if let Some(cell) = buf.get_mut(area.x + col as u16, area.y + progress_bar_y) {
-                cell.symbol = ch.to_string();
-            }
+            buf.modify_cell(area.x + col as u16, area.y + progress_bar_y, |cell| { cell.symbol = ch.to_string(); });
         }
 
         let bar_y = 6;
         let bar_start = 2;
         let bar_end = 50;
         for col in bar_start..=bar_end {
-            if let Some(cell) = buf.get_mut(area.x + col, area.y + bar_y) {
+            buf.modify_cell(area.x + col, area.y + bar_y, |cell| {
                 cell.symbol = if col < self.state.current_position() {
-                    "█"
+                "█"
                 } else {
-                    "░"
+                "░"
                 }
                 .to_string();
-            }
+            });
         }
 
         let eased_value = self.state.easing.eval(self.state.progress);
@@ -120,15 +112,11 @@ impl Component for AnimationDemo {
             self.state.easing_name, eased_value
         );
         for (col, ch) in easing_text.chars().enumerate() {
-            if let Some(cell) = buf.get_mut(area.x + col as u16, area.y + 8) {
-                cell.symbol = ch.to_string();
-            }
+            buf.modify_cell(area.x + col as u16, area.y + 8, |cell| { cell.symbol = ch.to_string(); });
         }
 
         let ball_pos = self.state.current_position();
-        if let Some(cell) = buf.get_mut(area.x + ball_pos, area.y + 10) {
-            cell.symbol = "●".to_string();
-        }
+        buf.modify_cell(area.x + ball_pos, area.y + 10, |cell| { cell.symbol = "●".to_string(); });
     }
 
     fn update(&mut self, msg: Box<dyn Msg>) -> Cmd {

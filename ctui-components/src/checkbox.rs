@@ -85,10 +85,10 @@ impl Widget for Checkbox {
             self.unchecked_char
         };
 
-        if let Some(cell) = buf.get_mut(area.x, area.y) {
+        buf.modify_cell(area.x, area.y, |cell| {
             cell.symbol = checkbox_char.to_string();
             cell.set_style(style);
-        }
+        });
 
         if let Some(ref label) = self.label {
             let label_start = area.x + 2;
@@ -99,10 +99,10 @@ impl Widget for Checkbox {
                 if x >= area.x + area.width {
                     break;
                 }
-                if let Some(cell) = buf.get_mut(x, area.y) {
+                buf.modify_cell(x, area.y, |cell| {
                     cell.symbol = ch.to_string();
                     cell.set_style(self.style);
-                }
+                });
             }
         }
     }
@@ -184,10 +184,10 @@ impl Widget for CheckboxGroup {
                 break;
             }
 
-            if let Some(cell) = buf.get_mut(x, area.y) {
+            buf.modify_cell(x, area.y, |cell| {
                 cell.symbol = checkbox_char.to_string();
                 cell.set_style(style);
-            }
+            });
             x += 1;
 
             x += 1;
@@ -196,10 +196,10 @@ impl Widget for CheckboxGroup {
                 if x >= area.x + area.width {
                     break;
                 }
-                if let Some(cell) = buf.get_mut(x, area.y) {
+                buf.modify_cell(x, area.y, |cell| {
                     cell.symbol = ch.to_string();
                     cell.set_style(self.style);
-                }
+                });
                 x += 1;
             }
 

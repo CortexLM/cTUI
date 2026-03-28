@@ -91,9 +91,7 @@ impl Component for Dashboard {
         let header_lines = [header, title, divider];
         for (row, line) in header_lines.iter().enumerate() {
             for (col, ch) in line.chars().enumerate() {
-                if let Some(cell) = buf.get_mut(area.x + col as u16, area.y + row as u16) {
-                    cell.symbol = ch.to_string();
-                }
+                buf.modify_cell(area.x + col as u16, area.y + row as u16, |cell| { cell.symbol = ch.to_string(); });
             }
         }
 
@@ -112,9 +110,7 @@ impl Component for Dashboard {
             );
 
             for (col, ch) in line.chars().take(area.width as usize).enumerate() {
-                if let Some(cell) = buf.get_mut(area.x + col as u16, area.y + row as u16) {
-                    cell.symbol = ch.to_string();
-                }
+                buf.modify_cell(area.x + col as u16, area.y + row as u16, |cell| { cell.symbol = ch.to_string(); });
             }
         }
     }

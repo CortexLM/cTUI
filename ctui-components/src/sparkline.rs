@@ -75,10 +75,10 @@ impl Widget for Sparkline {
 
             let x = start_x + i as u16;
             if x < area.x + area.width {
-                if let Some(cell) = buf.get_mut(x, area.y) {
+                buf.modify_cell(x, area.y, |cell| {
                     cell.symbol = ch.to_string();
                     cell.set_style(self.style);
-                }
+                });
             }
         }
     }
@@ -151,10 +151,10 @@ impl Widget for BarSparkline {
                 for dx in 0..bar_width {
                     let buf_x = bar_x + dx;
                     if buf_x < area.x + area.width {
-                        if let Some(cell) = buf.get_mut(buf_x, buf_y) {
+                        buf.modify_cell(buf_x, buf_y, |cell| {
                             cell.symbol = if is_filled { "█" } else { " " }.to_string();
                             cell.set_style(self.style);
-                        }
+                        });
                     }
                 }
             }

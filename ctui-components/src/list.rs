@@ -347,18 +347,18 @@ impl List {
                 break;
             }
 
-            if let Some(cell) = buf.get_mut(x, y) {
+            buf.modify_cell(x, y, |cell| {
                 cell.symbol = ch.to_string();
                 cell.set_style(style);
-            }
+            });
         }
 
         for i in chars.len()..area.width as usize {
             let x = area.x + i as u16;
-            if let Some(cell) = buf.get_mut(x, y) {
+            buf.modify_cell(x, y, |cell| {
                 cell.symbol = " ".to_string();
                 cell.set_style(style);
-            }
+            });
         }
     }
 }
@@ -448,7 +448,7 @@ mod tests {
         let mut output = String::new();
         for y in 0..height {
             for x in 0..width {
-                output.push_str(&buf[(x, y)].symbol);
+                if let Some(cell) = buf.get(x, y) { output.push_str(&cell.symbol); }
             }
             if y < height - 1 {
                 output.push('\n');
@@ -692,7 +692,7 @@ mod tests {
         list.render(Rect::new(0, 0, 10, 5), &mut buf);
 
         // Should render nothing (no panic)
-        assert_eq!(buf[(0, 0)].symbol, " ");
+        assert_eq!(buf.get(0, 0).unwrap().symbol, " ");
     }
 
     #[test]
@@ -707,9 +707,9 @@ mod tests {
 
         list.render(Rect::new(0, 0, 10, 3), &mut buf);
 
-        assert!(buf[(0, 0)].symbol.starts_with('I'));
-        assert!(buf[(0, 1)].symbol.starts_with('I'));
-        assert!(buf[(0, 2)].symbol.starts_with('I'));
+        assert!(buf.get(0, 0).unwrap().symbol.starts_with('I'));
+        assert!(buf.get(0, 1).unwrap().symbol.starts_with('I'));
+        assert!(buf.get(0, 2).unwrap().symbol.starts_with('I'));
     }
 
     #[test]
@@ -725,9 +725,9 @@ mod tests {
         list.render(Rect::new(0, 0, 10, 2), &mut buf);
 
         // First item should have blue background (selected)
-        assert_eq!(buf[(0, 0)].bg, Color::Blue);
+        assert_eq!(buf.get(0, 0).unwrap().bg, Color::Blue);
         // Second item should have default background
-        assert_eq!(buf[(0, 1)].bg, Color::Reset);
+        assert_eq!(buf.get(0, 1).unwrap().bg, Color::Reset);
     }
 
     #[test]
@@ -742,9 +742,9 @@ mod tests {
         list.render(Rect::new(0, 0, 10, 3), &mut buf);
 
         // Should show items 5, 6, 7
-        assert!(buf[(0, 0)].symbol.starts_with('I')); // Item 5
-        assert!(buf[(0, 1)].symbol.starts_with('I')); // Item 6
-        assert!(buf[(0, 2)].symbol.starts_with('I')); // Item 7
+        assert!(buf.get(0, 0).unwrap().symbol.starts_with('I')); // Item 5
+        assert!(buf.get(0, 1).unwrap().symbol.starts_with('I')); // Item 6
+        assert!(buf.get(0, 2).unwrap().symbol.starts_with('I')); // Item 7
     }
 
     #[test]
@@ -762,10 +762,10 @@ mod tests {
         list.render(Rect::new(0, 0, 10, 3), &mut buf);
 
         // Row 1 (item 6) should be highlighted
-        assert_eq!(buf[(0, 1)].bg, Color::Red);
+        assert_eq!(buf.get(0, 1).unwrap().bg, Color::Red);
         // Other rows not highlighted
-        assert_eq!(buf[(0, 0)].bg, Color::Reset);
-        assert_eq!(buf[(0, 2)].bg, Color::Reset);
+        assert_eq!(buf.get(0, 0).unwrap().bg, Color::Reset);
+        assert_eq!(buf.get(0, 2).unwrap().bg, Color::Reset);
     }
 
     #[test]

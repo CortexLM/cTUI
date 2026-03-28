@@ -192,10 +192,10 @@ impl Scrollable {
 
         if self.content_height <= viewport_height {
             for y in area.y..area.y + area.height {
-                if let Some(cell) = buf.get_mut(x, y) {
+                buf.modify_cell(x, y, |cell| {
                     cell.symbol = self.track_char.to_string();
                     cell.set_style(self.track_style);
-                }
+                });
             }
             return;
         }
@@ -206,15 +206,15 @@ impl Scrollable {
         let thumb_start = (scroll_ratio * (viewport_height - thumb_height) as f64).round() as usize;
 
         for (i, y) in (area.y..area.y + area.height).enumerate() {
-            if let Some(cell) = buf.get_mut(x, y) {
+            buf.modify_cell(x, y, |cell| {
                 if i >= thumb_start && i < thumb_start + thumb_height {
-                    cell.symbol = self.thumb_char.to_string();
-                    cell.set_style(self.scrollbar_style);
+                cell.symbol = self.thumb_char.to_string();
+                cell.set_style(self.scrollbar_style);
                 } else {
-                    cell.symbol = self.track_char.to_string();
-                    cell.set_style(self.track_style);
+                cell.symbol = self.track_char.to_string();
+                cell.set_style(self.track_style);
                 }
-            }
+            });
         }
     }
 
@@ -228,10 +228,10 @@ impl Scrollable {
 
         if self.content_width <= viewport_width {
             for x in area.x..area.x + area.width {
-                if let Some(cell) = buf.get_mut(x, y) {
+                buf.modify_cell(x, y, |cell| {
                     cell.symbol = self.track_char.to_string();
                     cell.set_style(self.track_style);
-                }
+                });
             }
             return;
         }
@@ -242,15 +242,15 @@ impl Scrollable {
         let thumb_start = (scroll_ratio * (viewport_width - thumb_width) as f64).round() as usize;
 
         for (i, x) in (area.x..area.x + area.width).enumerate() {
-            if let Some(cell) = buf.get_mut(x, y) {
+            buf.modify_cell(x, y, |cell| {
                 if i >= thumb_start && i < thumb_start + thumb_width {
-                    cell.symbol = self.thumb_char.to_string();
-                    cell.set_style(self.scrollbar_style);
+                cell.symbol = self.thumb_char.to_string();
+                cell.set_style(self.scrollbar_style);
                 } else {
-                    cell.symbol = self.track_char.to_string();
-                    cell.set_style(self.track_style);
+                cell.symbol = self.track_char.to_string();
+                cell.set_style(self.track_style);
                 }
-            }
+            });
         }
     }
 
@@ -390,7 +390,7 @@ mod tests {
         let mut output = String::new();
         for y in 0..height {
             for x in 0..width {
-                output.push_str(&buf[(x, y)].symbol);
+                if let Some(cell) = buf.get(x, y) { output.push_str(&cell.symbol); }
             }
             if y < height - 1 {
                 output.push('\n');

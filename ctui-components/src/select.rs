@@ -174,17 +174,17 @@ impl Widget for Select {
             .collect();
 
         for (i, ch) in truncated.chars().enumerate() {
-            if let Some(cell) = buf.get_mut(area.x + i as u16, area.y) {
+            buf.modify_cell(area.x + i as u16, area.y, |cell| {
                 cell.symbol = ch.to_string();
                 cell.set_style(self.style);
-            }
+            });
         }
 
         let arrow_x = area.x + area.width.saturating_sub(2);
-        if let Some(cell) = buf.get_mut(arrow_x, area.y) {
+        buf.modify_cell(arrow_x, area.y, |cell| {
             cell.symbol = if self.open { "▲" } else { "▼" }.to_string();
             cell.set_style(self.style);
-        }
+        });
 
         if self.open && !self.items.is_empty() {
             let dropdown_height = self.max_height.min(self.items.len() as u16 + 1).max(1);
@@ -208,10 +208,10 @@ impl Widget for Select {
 
                 let item_text = item.content_str();
                 for (j, ch) in item_text.chars().take(area.width as usize).enumerate() {
-                    if let Some(cell) = buf.get_mut(area.x + j as u16, y) {
+                    buf.modify_cell(area.x + j as u16, y, |cell| {
                         cell.symbol = ch.to_string();
                         cell.set_style(style);
-                    }
+                    });
                 }
             }
         }
@@ -302,15 +302,13 @@ impl Widget for ComboBox {
             .collect();
 
         for (i, ch) in display.chars().enumerate() {
-            if let Some(cell) = buf.get_mut(area.x + i as u16, area.y) {
+            buf.modify_cell(area.x + i as u16, area.y, |cell| {
                 cell.symbol = ch.to_string();
                 cell.set_style(self.style);
-            }
+            });
         }
 
-        if let Some(cell) = buf.get_mut(area.x + self.cursor as u16, area.y) {
-            cell.symbol = "│".to_string();
-        }
+        buf.modify_cell(area.x + self.cursor as u16, area.y, |cell| { cell.symbol = "│".to_string(); });
 
         if self.open && !self.filtered_items.is_empty() {
             let dropdown_y = area.y + 1;
@@ -319,10 +317,10 @@ impl Widget for ComboBox {
                 if let Some(item) = self.items.get(item_idx) {
                     let item_text = item.content_str();
                     for (j, ch) in item_text.chars().take(area.width as usize).enumerate() {
-                        if let Some(cell) = buf.get_mut(area.x + j as u16, y) {
+                        buf.modify_cell(area.x + j as u16, y, |cell| {
                             cell.symbol = ch.to_string();
                             cell.set_style(self.style);
-                        }
+                        });
                     }
                 }
             }

@@ -37,12 +37,14 @@ fn buffer_diff_full_change(c: &mut Criterion) {
     group.throughput(Throughput::Elements(80 * 24));
 
     group.bench_function("ctui_80x24", |b| {
-        use ctui_core::{Buffer, Rect};
+        use ctui_core::{Buffer, Cell, Rect};
         let area = Rect::new(0, 0, 80, 24);
         let prev = Buffer::empty(area);
         let mut next = Buffer::empty(area);
-        for cell in &mut next.content {
-            cell.symbol = "X".to_string();
+        for y in 0..area.height {
+            for x in 0..area.width {
+                next.set(x, y, Cell::new("X"));
+            }
         }
 
         b.iter(|| prev.diff(&next).count())
@@ -69,12 +71,14 @@ fn buffer_diff_partial_change(c: &mut Criterion) {
     group.throughput(Throughput::Elements(80 * 24));
 
     group.bench_function("ctui_80x24_50percent", |b| {
-        use ctui_core::{Buffer, Rect};
+        use ctui_core::{Buffer, Cell, Rect};
         let area = Rect::new(0, 0, 80, 24);
         let prev = Buffer::empty(area);
         let mut next = Buffer::empty(area);
-        for i in 0..(12 * 80) {
-            next.content[i].symbol = "Y".to_string();
+        for y in 0..12 {
+            for x in 0..area.width {
+                next.set(x, y, Cell::new("Y"));
+            }
         }
 
         b.iter(|| prev.diff(&next).count())
@@ -101,12 +105,15 @@ fn buffer_diff_large(c: &mut Criterion) {
     group.throughput(Throughput::Elements(200 * 50));
 
     group.bench_function("ctui_200x50", |b| {
-        use ctui_core::{Buffer, Rect};
+        use ctui_core::{Buffer, Cell, Rect};
         let area = Rect::new(0, 0, 200, 50);
         let prev = Buffer::empty(area);
         let mut next = Buffer::empty(area);
-        for i in (0..(25 * 200)).step_by(2) {
-            next.content[i].symbol = "X".to_string();
+        let mut set_even = false;
+        for y in 0..25 {
+            for x in (0..area.width).step_by(2) {
+                next.set(x, y, Cell::new("X"));
+            }
         }
 
         b.iter(|| prev.diff(&next).count())

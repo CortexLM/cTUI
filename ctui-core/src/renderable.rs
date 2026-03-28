@@ -547,34 +547,34 @@ mod tests {
             .with_position(Position::new(0, 0))
             .with_size(Size::new(10, 1))
             .with_render_fn(|area, buf| {
-                if let Some(cell) = buf.get_mut(area.x, area.y) {
+                buf.modify_cell(area.x, area.y, |cell| {
                     cell.symbol = "5".to_string();
-                }
+                });
             });
         let child_z1 = RenderObject::new("z1")
             .with_z_index(1)
             .with_position(Position::new(0, 0))
             .with_size(Size::new(10, 1))
             .with_render_fn(|area, buf| {
-                if let Some(cell) = buf.get_mut(area.x, area.y) {
+                buf.modify_cell(area.x, area.y, |cell| {
                     cell.symbol = "1".to_string();
-                }
+                });
             });
         let child_z10 = RenderObject::new("z10")
             .with_z_index(10)
             .with_position(Position::new(0, 0))
             .with_size(Size::new(10, 1))
             .with_render_fn(|area, buf| {
-                if let Some(cell) = buf.get_mut(area.x, area.y) {
+                buf.modify_cell(area.x, area.y, |cell| {
                     cell.symbol = "A".to_string();
-                }
+                });
             });
         parent.add(Box::new(child_z5));
         parent.add(Box::new(child_z1));
         parent.add(Box::new(child_z10));
         let mut buf = make_buffer();
         parent.render(Rect::new(0, 0, 80, 24), &mut buf);
-        assert_eq!(buf[(0, 0)].symbol, "A");
+        assert_eq!(buf.get(0, 0).unwrap().symbol, "A");
     }
 
     #[test]
@@ -585,24 +585,24 @@ mod tests {
             .with_position(Position::new(0, 0))
             .with_size(Size::new(10, 1))
             .with_render_fn(|area, buf| {
-                if let Some(cell) = buf.get_mut(area.x, area.y) {
+                buf.modify_cell(area.x, area.y, |cell| {
                     cell.symbol = "B".to_string();
-                }
+                });
             });
         let foreground = RenderObject::new("fg")
             .with_z_index(0)
             .with_position(Position::new(0, 0))
             .with_size(Size::new(10, 1))
             .with_render_fn(|area, buf| {
-                if let Some(cell) = buf.get_mut(area.x, area.y) {
+                buf.modify_cell(area.x, area.y, |cell| {
                     cell.symbol = "F".to_string();
-                }
+                });
             });
         parent.add(Box::new(background));
         parent.add(Box::new(foreground));
         let mut buf = make_buffer();
         parent.render(Rect::new(0, 0, 80, 24), &mut buf);
-        assert_eq!(buf[(0, 0)].symbol, "F");
+        assert_eq!(buf.get(0, 0).unwrap().symbol, "F");
     }
 
     #[test]
@@ -704,23 +704,23 @@ mod tests {
         let mut parent = RenderObject::new("parent")
             .with_size(Size::new(10, 1))
             .with_render_fn(|area, buf| {
-                if let Some(cell) = buf.get_mut(area.x, area.y) {
+                buf.modify_cell(area.x, area.y, |cell| {
                     cell.symbol = "P".to_string();
-                }
+                });
             });
         let child = RenderObject::new("child")
             .with_position(Position::new(0, 0))
             .with_size(Size::new(10, 1))
             .with_visible(false)
             .with_render_fn(|area, buf| {
-                if let Some(cell) = buf.get_mut(area.x, area.y) {
+                buf.modify_cell(area.x, area.y, |cell| {
                     cell.symbol = "C".to_string();
-                }
+                });
             });
         parent.add(Box::new(child));
         let mut buf = make_buffer();
         parent.render(Rect::new(0, 0, 80, 24), &mut buf);
-        assert_eq!(buf[(0, 0)].symbol, "P");
+        assert_eq!(buf.get(0, 0).unwrap().symbol, "P");
     }
 
     #[test]

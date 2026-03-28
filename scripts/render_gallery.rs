@@ -29,7 +29,7 @@ fn buffer_to_string(buf: &Buffer) -> String {
     let mut output = String::new();
     for y in 0..buf.area.height {
         for x in 0..buf.area.width {
-            output.push_str(&buf[(x, y)].symbol);
+            if let Some(cell) = buf.get(x, y) { output.push_str(&cell.symbol); }
         }
         if y < buf.area.height - 1 {
             output.push('\n');

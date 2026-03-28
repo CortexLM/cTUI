@@ -184,10 +184,10 @@ impl Widget for RadioGroup {
                     self.unselected_char
                 };
 
-                if let Some(cell) = buf.get_mut(area.x, y) {
+                buf.modify_cell(area.x, y, |cell| {
                     cell.symbol = radio_char.to_string();
                     cell.set_style(style);
-                }
+                });
 
                 let label_start = area.x + 2;
                 for (j, ch) in item.label_content().chars().enumerate() {
@@ -195,10 +195,10 @@ impl Widget for RadioGroup {
                     if x >= area.x + area.width {
                         break;
                     }
-                    if let Some(cell) = buf.get_mut(x, y) {
+                    buf.modify_cell(x, y, |cell| {
                         cell.symbol = ch.to_string();
                         cell.set_style(self.style);
-                    }
+                    });
                 }
             }
         } else {
@@ -221,20 +221,20 @@ impl Widget for RadioGroup {
                     self.unselected_char
                 };
 
-                if let Some(cell) = buf.get_mut(x, area.y) {
+                buf.modify_cell(x, area.y, |cell| {
                     cell.symbol = radio_char.to_string();
                     cell.set_style(style);
-                }
+                });
                 x += 2;
 
                 for ch in item.label_content().chars() {
                     if x >= area.x + area.width {
                         break;
                     }
-                    if let Some(cell) = buf.get_mut(x, area.y) {
+                    buf.modify_cell(x, area.y, |cell| {
                         cell.symbol = ch.to_string();
                         cell.set_style(self.style);
-                    }
+                    });
                     x += 1;
                 }
 

@@ -169,10 +169,10 @@ impl Canvas {
             let buf_x = area.x + x.clamp(0, area.width as i32 - 1) as u16;
             let buf_y = area.y + y.clamp(0, area.height as i32 - 1) as u16;
 
-            if let Some(cell) = buf.get_mut(buf_x, buf_y) {
+            buf.modify_cell(buf_x, buf_y, |cell| {
                 cell.symbol = "█".to_string();
                 cell.set_style(*style);
-            }
+            });
 
             if x == x1 && y == y1 {
                 break;
@@ -209,49 +209,41 @@ impl Canvas {
                 for x in x0..=x1 {
                     let buf_x = area.x + x;
                     let buf_y = area.y + y;
-                    if let Some(cell) = buf.get_mut(buf_x, buf_y) {
+                    buf.modify_cell(buf_x, buf_y, |cell| {
                         cell.symbol = "█".to_string();
                         cell.set_style(*style);
-                    }
+                    });
                 }
             }
         } else {
             for x in x0..=x1 {
-                if let Some(cell) = buf.get_mut(area.x + x, area.y + y0) {
+                buf.modify_cell(area.x + x, area.y + y0, |cell| {
                     cell.symbol = "─".to_string();
                     cell.set_style(*style);
-                }
+                });
                 if y0 != y1 {
-                    if let Some(cell) = buf.get_mut(area.x + x, area.y + y1) {
+                    buf.modify_cell(area.x + x, area.y + y1, |cell| {
                         cell.symbol = "─".to_string();
                         cell.set_style(*style);
-                    }
+                    });
                 }
             }
             for y in y0..=y1 {
-                if let Some(cell) = buf.get_mut(area.x + x0, area.y + y) {
+                buf.modify_cell(area.x + x0, area.y + y, |cell| {
                     cell.symbol = "│".to_string();
                     cell.set_style(*style);
-                }
+                });
                 if x0 != x1 {
-                    if let Some(cell) = buf.get_mut(area.x + x1, area.y + y) {
+                    buf.modify_cell(area.x + x1, area.y + y, |cell| {
                         cell.symbol = "│".to_string();
                         cell.set_style(*style);
-                    }
+                    });
                 }
             }
-            if let Some(cell) = buf.get_mut(area.x + x0, area.y + y0) {
-                cell.symbol = "┌".to_string();
-            }
-            if let Some(cell) = buf.get_mut(area.x + x1, area.y + y0) {
-                cell.symbol = "┐".to_string();
-            }
-            if let Some(cell) = buf.get_mut(area.x + x0, area.y + y1) {
-                cell.symbol = "└".to_string();
-            }
-            if let Some(cell) = buf.get_mut(area.x + x1, area.y + y1) {
-                cell.symbol = "┘".to_string();
-            }
+            buf.modify_cell(area.x + x0, area.y + y0, |cell| { cell.symbol = "┌".to_string(); });
+            buf.modify_cell(area.x + x1, area.y + y0, |cell| { cell.symbol = "┐".to_string(); });
+            buf.modify_cell(area.x + x0, area.y + y1, |cell| { cell.symbol = "└".to_string(); });
+            buf.modify_cell(area.x + x1, area.y + y1, |cell| { cell.symbol = "┘".to_string(); });
         }
     }
 
@@ -276,10 +268,10 @@ impl Canvas {
                     if dx * dx + dy * dy <= r * r {
                         let buf_x = area.x + x.clamp(0, area.width as i32 - 1) as u16;
                         let buf_y = area.y + y.clamp(0, area.height as i32 - 1) as u16;
-                        if let Some(cell) = buf.get_mut(buf_x, buf_y) {
+                        buf.modify_cell(buf_x, buf_y, |cell| {
                             cell.symbol = "█".to_string();
                             cell.set_style(*style);
-                        }
+                        });
                     }
                 }
             }
@@ -304,10 +296,10 @@ impl Canvas {
                     if px >= 0 && py >= 0 {
                         let buf_x = area.x + (px as u16).min(area.width - 1);
                         let buf_y = area.y + (py as u16).min(area.height - 1);
-                        if let Some(cell) = buf.get_mut(buf_x, buf_y) {
+                        buf.modify_cell(buf_x, buf_y, |cell| {
                             cell.symbol = "●".to_string();
                             cell.set_style(*style);
-                        }
+                        });
                     }
                 }
 
@@ -331,10 +323,10 @@ impl Widget for Canvas {
         if let Some(ch) = self.background {
             for y in area.y..area.y + area.height {
                 for x in area.x..area.x + area.width {
-                    if let Some(cell) = buf.get_mut(x, y) {
+                    buf.modify_cell(x, y, |cell| {
                         cell.symbol = ch.to_string();
                         cell.set_style(self.background_style);
-                    }
+                    });
                 }
             }
         }

@@ -113,9 +113,9 @@ use ctui_core::{Buffer, Rect};
 ///
 /// impl Widget for HelloWorld {
 ///     fn render(&self, area: Rect, buf: &mut Buffer) {
-///         if let Some(cell) = buf.get_mut(area.x, area.y) {
+///         buf.modify_cell(area.x, area.y, |cell| {
 ///             cell.symbol = "Hello, World!".to_string();
-///         }
+///         });
 ///     }
 /// }
 /// ```
@@ -145,7 +145,7 @@ pub trait WidgetExt: Widget + Sized {
         let mut output = String::new();
         for y in 0..height {
             for x in 0..width {
-                output.push_str(&buf[(x, y)].symbol);
+                if let Some(cell) = buf.get(x, y) { output.push_str(&cell.symbol); }
             }
             if y < height - 1 {
                 output.push('\n');

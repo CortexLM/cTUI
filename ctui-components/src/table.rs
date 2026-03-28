@@ -484,10 +484,10 @@ impl Table {
         if is_selected && !self.highlight_symbol.is_empty() {
             let sym_width = UnicodeWidthStr::width(self.highlight_symbol.as_str());
             for (i, ch) in self.highlight_symbol.chars().enumerate() {
-                if let Some(cell) = buf.get_mut(x + i as u16, y) {
+                buf.modify_cell(x + i as u16, y, |cell| {
                     cell.symbol = ch.to_string();
                     cell.set_style(row_style);
-                }
+                });
             }
             x += sym_width as u16;
         }
@@ -504,10 +504,10 @@ impl Table {
                 if ch_x >= x_start + x + *width || ch_x >= buf.area.x + buf.area.width {
                     break;
                 }
-                if let Some(cell) = buf.get_mut(ch_x, y) {
+                buf.modify_cell(ch_x, y, |cell| {
                     cell.symbol = ch.to_string();
                     cell.set_style(*cell_style);
-                }
+                });
             }
 
             x += *width;
@@ -623,20 +623,20 @@ impl Component for Table {
                     if ch_x >= area.x + area.width {
                         break;
                     }
-                    if let Some(cell) = buf.get_mut(ch_x, y) {
+                    buf.modify_cell(ch_x, y, |cell| {
                         cell.symbol = ch.to_string();
                         cell.set_style(self.header_style);
-                    }
+                    });
                 }
             }
 
             y += 1;
             if y < area.y + area.height {
                 for x in area.x..area.x + area.width {
-                    if let Some(cell) = buf.get_mut(x, y) {
+                    buf.modify_cell(x, y, |cell| {
                         cell.symbol = "─".to_string();
                         cell.set_style(self.header_style);
-                    }
+                    });
                 }
             }
             y += 1;
@@ -677,7 +677,7 @@ mod tests {
         let mut output = String::new();
         for y in 0..height {
             for x in 0..width {
-                output.push_str(&buf[(x, y)].symbol);
+                if let Some(cell) = buf.get(x, y) { output.push_str(&cell.symbol); }
             }
             if y < height - 1 {
                 output.push('\n');
@@ -999,9 +999,9 @@ mod tests {
         let mut buf = Buffer::empty(Rect::new(0, 0, 10, 1));
         table.render(Rect::new(0, 0, 10, 1), &mut buf);
 
-        assert_eq!(buf[(0, 0)].symbol, "H");
-        assert_eq!(buf[(1, 0)].symbol, "e");
-        assert_eq!(buf[(5, 0)].symbol, "W");
+        assert_eq!(buf.get(0, 0).unwrap().symbol, "H");
+        assert_eq!(buf.get(1, 0).unwrap().symbol, "e");
+        assert_eq!(buf.get(5, 0).unwrap().symbol, "W");
     }
 
     #[test]
@@ -1014,13 +1014,13 @@ mod tests {
         let mut buf = Buffer::empty(Rect::new(0, 0, 10, 3));
         table.render(Rect::new(0, 0, 10, 3), &mut buf);
 
-        assert_eq!(buf[(0, 0)].symbol, "C");
-        assert_eq!(buf[(5, 0)].symbol, "C");
+        assert_eq!(buf.get(0, 0).unwrap().symbol, "C");
+        assert_eq!(buf.get(5, 0).unwrap().symbol, "C");
 
-        assert_eq!(buf[(0, 1)].symbol, "─");
+        assert_eq!(buf.get(0, 1).unwrap().symbol, "─");
 
-        assert_eq!(buf[(0, 2)].symbol, "A");
-        assert_eq!(buf[(5, 2)].symbol, "B");
+        assert_eq!(buf.get(0, 2).unwrap().symbol, "A");
+        assert_eq!(buf.get(5, 2).unwrap().symbol, "B");
     }
 
     #[test]
@@ -1037,8 +1037,8 @@ mod tests {
         let mut buf = Buffer::empty(Rect::new(0, 0, 10, 2));
         table.render(Rect::new(0, 0, 10, 2), &mut buf);
 
-        assert_eq!(buf[(0, 0)].bg, Color::Blue);
-        assert_eq!(buf[(0, 1)].bg, Color::Reset);
+        assert_eq!(buf.get(0, 0).unwrap().bg, Color::Blue);
+        assert_eq!(buf.get(0, 1).unwrap().bg, Color::Reset);
     }
 
     #[test]
@@ -1054,7 +1054,7 @@ mod tests {
         let mut buf = Buffer::empty(Rect::new(0, 0, 5, 1));
         table.render(Rect::new(0, 0, 5, 1), &mut buf);
 
-        assert!(buf[(0, 0)].symbol.starts_with('R'));
+        assert!(buf.get(0, 0).unwrap().symbol.starts_with('R'));
     }
 
     #[test]

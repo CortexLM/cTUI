@@ -142,21 +142,15 @@ impl Component for FileExplorer {
         let footer = "╚═══════════════════════════════════════════════════════╝";
 
         for (col, ch) in header.chars().enumerate() {
-            if let Some(cell) = buf.get_mut(area.x + col as u16, area.y) {
-                cell.symbol = ch.to_string();
-            }
+            buf.modify_cell(area.x + col as u16, area.y, |cell| { cell.symbol = ch.to_string(); });
         }
 
         for (col, ch) in title.chars().take(area.width as usize).enumerate() {
-            if let Some(cell) = buf.get_mut(area.x + col as u16, area.y + 1) {
-                cell.symbol = ch.to_string();
-            }
+            buf.modify_cell(area.x + col as u16, area.y + 1, |cell| { cell.symbol = ch.to_string(); });
         }
 
         for (col, ch) in divider.chars().enumerate() {
-            if let Some(cell) = buf.get_mut(area.x + col as u16, area.y + 2) {
-                cell.symbol = ch.to_string();
-            }
+            buf.modify_cell(area.x + col as u16, area.y + 2, |cell| { cell.symbol = ch.to_string(); });
         }
 
         let entries_start = 3;
@@ -177,11 +171,9 @@ impl Component for FileExplorer {
             );
 
             for (col, ch) in line.chars().take(area.width as usize).enumerate() {
-                if let Some(cell) =
-                    buf.get_mut(area.x + col as u16, area.y + entries_start + idx as u16)
-                {
+                buf.modify_cell(area.x + col as u16, area.y + entries_start + idx as u16, |cell| {
                     cell.symbol = ch.to_string();
-                }
+                });
             }
         }
     }

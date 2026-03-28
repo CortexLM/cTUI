@@ -271,39 +271,37 @@ impl Component for Paragraph {
                 }
 
                 // Write the character
-                if let Some(cell) = buf.get_mut(term_x, y) {
+                buf.modify_cell(term_x, y, |cell| {
                     cell.symbol = ch.to_string();
                     // Merge base style with line style and char style
                     let merged_style = Style {
-                        fg: if char_style.fg != ctui_core::style::Color::Reset {
-                            char_style.fg
-                        } else if self.style.fg != ctui_core::style::Color::Reset {
-                            self.style.fg
-                        } else {
-                            line.style_ref().fg
-                        },
-                        bg: if char_style.bg != ctui_core::style::Color::Reset {
-                            char_style.bg
-                        } else if self.style.bg != ctui_core::style::Color::Reset {
-                            self.style.bg
-                        } else {
-                            line.style_ref().bg
-                        },
-                        modifier: self.style.modifier
-                            | line.style_ref().modifier
-                            | char_style.modifier,
+                    fg: if char_style.fg != ctui_core::style::Color::Reset {
+                    char_style.fg
+                    } else if self.style.fg != ctui_core::style::Color::Reset {
+                    self.style.fg
+                    } else {
+                    line.style_ref().fg
+                    },
+                    bg: if char_style.bg != ctui_core::style::Color::Reset {
+                    char_style.bg
+                    } else if self.style.bg != ctui_core::style::Color::Reset {
+                    self.style.bg
+                    } else {
+                    line.style_ref().bg
+                    },
+                    modifier: self.style.modifier
+                    | line.style_ref().modifier
+                    | char_style.modifier,
                     };
                     cell.set_style(merged_style);
-                }
+                });
 
                 // Handle wide characters
                 if ch_width > 1 {
                     for i in 1..ch_width {
                         let next_x = term_x + i as u16;
                         if next_x < area.x + area.width {
-                            if let Some(cell) = buf.get_mut(next_x, y) {
-                                cell.skip = true;
-                            }
+                            buf.modify_cell(next_x, y, |cell| { cell.skip = true; });
                         }
                     }
                 }
@@ -339,7 +337,7 @@ mod tests {
         let mut output = String::new();
         for y in 0..height {
             for x in 0..width {
-                output.push_str(&buf[(x, y)].symbol);
+                if let Some(cell) = buf.get(x, y) { output.push_str(&cell.symbol); }
             }
             if y < height - 1 {
                 output.push('\n');
@@ -523,9 +521,9 @@ mod tests {
         let mut buf = Buffer::empty(Rect::new(0, 0, 20, 1));
         p.render(Rect::new(0, 0, 20, 1), &mut buf);
 
-        assert_eq!(buf[(0, 0)].symbol, "H");
-        assert_eq!(buf[(1, 0)].symbol, "e");
-        assert_eq!(buf[(2, 0)].symbol, "l");
+        assert_eq!(buf.get(0, 0).unwrap().symbol, "H");
+        assert_eq!(buf.get(1, 0).unwrap().symbol, "e");
+        assert_eq!(buf.get(2, 0).unwrap().symbol, "l");
     }
 
     #[test]
@@ -534,8 +532,8 @@ mod tests {
         let mut buf = Buffer::empty(Rect::new(0, 0, 10, 2));
         p.render(Rect::new(0, 0, 10, 2), &mut buf);
 
-        assert_eq!(buf[(0, 0)].symbol, "L");
-        assert_eq!(buf[(0, 1)].symbol, "L");
+        assert_eq!(buf.get(0, 0).unwrap().symbol, "L");
+        assert_eq!(buf.get(0, 1).unwrap().symbol, "L");
     }
 
     #[test]
@@ -545,9 +543,9 @@ mod tests {
         p.render(Rect::new(0, 0, 10, 1), &mut buf);
 
         // "Hi" is 2 chars, should be centered in 10 (offset 4)
-        assert_eq!(buf[(0, 0)].symbol, " ");
-        assert_eq!(buf[(4, 0)].symbol, "H");
-        assert_eq!(buf[(5, 0)].symbol, "i");
+        assert_eq!(buf.get(0, 0).unwrap().symbol, " ");
+        assert_eq!(buf.get(4, 0).unwrap().symbol, "H");
+        assert_eq!(buf.get(5, 0).unwrap().symbol, "i");
     }
 
     #[test]
@@ -557,8 +555,8 @@ mod tests {
         p.render(Rect::new(0, 0, 10, 1), &mut buf);
 
         // "Hi" is 2 chars, right aligned in 10 means offset 8
-        assert_eq!(buf[(8, 0)].symbol, "H");
-        assert_eq!(buf[(9, 0)].symbol, "i");
+        assert_eq!(buf.get(8, 0).unwrap().symbol, "H");
+        assert_eq!(buf.get(9, 0).unwrap().symbol, "i");
     }
 
     #[test]
@@ -568,7 +566,7 @@ mod tests {
         p.render(Rect::new(0, 0, 10, 2), &mut buf);
 
         // Should show Line 2 and Line 3 (skipped Line 1)
-        assert!(buf[(0, 0)].symbol.starts_with('L'));
+        assert!(buf.get(0, 0).unwrap().symbol.starts_with('L'));
     }
 
     #[test]
@@ -578,6 +576,6 @@ mod tests {
         p.render(Rect::new(0, 0, 10, 1), &mut buf);
 
         // Should render but not wrap
-        assert_eq!(buf[(0, 0)].symbol, "V");
+        assert_eq!(buf.get(0, 0).unwrap().symbol, "V");
     }
 }

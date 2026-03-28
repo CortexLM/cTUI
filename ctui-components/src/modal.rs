@@ -275,9 +275,7 @@ impl Modal {
 
         for y in area.y..area.y + area.height {
             for x in area.x..area.x + area.width {
-                if let Some(cell) = buf.get_mut(x, y) {
-                    cell.set_style(self.backdrop_style);
-                }
+                buf.modify_cell(x, y, |cell| { cell.set_style(self.backdrop_style); });
             }
         }
     }
@@ -303,17 +301,17 @@ impl Modal {
             let button_width = button_text.len() as u16;
 
             for (j, ch) in button_text.chars().enumerate() {
-                if let Some(cell) = buf.get_mut(current_x + j as u16, button_row) {
+                buf.modify_cell(current_x + j as u16, button_row, |cell| {
                     cell.symbol = ch.to_string();
                     cell.set_style(if is_focused {
-                        Style {
-                            modifier: ctui_core::style::Modifier::REVERSED,
-                            ..button.style
-                        }
+                    Style {
+                    modifier: ctui_core::style::Modifier::REVERSED,
+                    ..button.style
+                    }
                     } else {
-                        button.style
+                    button.style
                     });
-                }
+                });
             }
 
             current_x += button_width + 2;
@@ -337,10 +335,10 @@ impl Modal {
                 .take(modal_area.width.saturating_sub(2) as usize)
                 .enumerate()
             {
-                if let Some(cell) = buf.get_mut(modal_area.x + 1 + j as u16, y) {
+                buf.modify_cell(modal_area.x + 1 + j as u16, y, |cell| {
                     cell.symbol = ch.to_string();
                     cell.set_style(self.content_style);
-                }
+                });
             }
         }
     }
@@ -469,7 +467,7 @@ mod tests {
         let mut output = String::new();
         for y in 0..height {
             for x in 0..width {
-                output.push_str(&buf[(x, y)].symbol);
+                if let Some(cell) = buf.get(x, y) { output.push_str(&cell.symbol); }
             }
             if y < height - 1 {
                 output.push('\n');

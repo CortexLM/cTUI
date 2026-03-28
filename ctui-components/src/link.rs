@@ -153,10 +153,10 @@ impl Component for Link {
             if x >= area.x + area.width {
                 break;
             }
-            if let Some(cell) = buf.get_mut(x, area.y) {
+            buf.modify_cell(x, area.y, |cell| {
                 cell.symbol = ch.to_string();
                 cell.set_style(style);
-            }
+            });
         }
     }
 
@@ -417,10 +417,10 @@ mod tests {
         let mut buf = Buffer::empty(Rect::new(0, 0, 10, 1));
         link.render(Rect::new(0, 0, 10, 1), &mut buf);
 
-        assert_eq!(buf[(0, 0)].symbol, "H");
-        assert_eq!(buf[(1, 0)].symbol, "e");
-        assert_eq!(buf[(2, 0)].symbol, "l");
-        assert_eq!(buf[(3, 0)].symbol, "l");
-        assert_eq!(buf[(4, 0)].symbol, "o");
+        assert_eq!(buf.get(0, 0).unwrap().symbol, "H");
+        assert_eq!(buf.get(1, 0).unwrap().symbol, "e");
+        assert_eq!(buf.get(2, 0).unwrap().symbol, "l");
+        assert_eq!(buf.get(3, 0).unwrap().symbol, "l");
+        assert_eq!(buf.get(4, 0).unwrap().symbol, "o");
     }
 }

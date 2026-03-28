@@ -212,10 +212,10 @@ impl Tree {
         for (i, ch) in prefix_chars.iter().enumerate() {
             let x = indent_x + i as u16;
             if x < area.x + area.width {
-                if let Some(cell) = buf.get_mut(x, y) {
+                buf.modify_cell(x, y, |cell| {
                     cell.symbol = ch.to_string();
                     cell.set_style(style);
-                }
+                });
             }
         }
 
@@ -226,10 +226,10 @@ impl Tree {
             if x >= area.x + area.width {
                 break;
             }
-            if let Some(cell) = buf.get_mut(x, y) {
+            buf.modify_cell(x, y, |cell| {
                 cell.symbol = ch.to_string();
                 cell.set_style(*char_style);
-            }
+            });
         }
     }
 }

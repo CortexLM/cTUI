@@ -146,18 +146,18 @@ impl Widget for Slider {
 
             for x in 0..area.width {
                 let buf_x = area.x + x;
-                if let Some(cell) = buf.get_mut(buf_x, area.y) {
+                buf.modify_cell(buf_x, area.y, |cell| {
                     if x == thumb_pos {
-                        cell.symbol = "●".to_string();
-                        cell.set_style(self.thumb_style);
+                    cell.symbol = "●".to_string();
+                    cell.set_style(self.thumb_style);
                     } else if x < filled_width {
-                        cell.symbol = "█".to_string();
-                        cell.set_style(self.style);
+                    cell.symbol = "█".to_string();
+                    cell.set_style(self.style);
                     } else {
-                        cell.symbol = "░".to_string();
-                        cell.set_style(self.track_style);
+                    cell.symbol = "░".to_string();
+                    cell.set_style(self.track_style);
                     }
-                }
+                });
             }
 
             if self.show_value || self.label.is_some() {
@@ -176,10 +176,10 @@ impl Widget for Slider {
                     for (i, ch) in display.chars().enumerate() {
                         let x_pos = label_x + i as u16;
                         if x_pos < area.x + area.width {
-                            if let Some(cell) = buf.get_mut(x_pos, label_y) {
+                            buf.modify_cell(x_pos, label_y, |cell| {
                                 cell.symbol = ch.to_string();
                                 cell.set_style(self.style);
-                            }
+                            });
                         }
                     }
                 }
@@ -190,28 +190,28 @@ impl Widget for Slider {
 
             for y in 0..area.height {
                 let buf_y = area.y + y;
-                if let Some(cell) = buf.get_mut(area.x, buf_y) {
+                buf.modify_cell(area.x, buf_y, |cell| {
                     if y == thumb_pos {
-                        cell.symbol = "●".to_string();
-                        cell.set_style(self.thumb_style);
+                    cell.symbol = "●".to_string();
+                    cell.set_style(self.thumb_style);
                     } else if y > thumb_pos {
-                        cell.symbol = "█".to_string();
-                        cell.set_style(self.style);
+                    cell.symbol = "█".to_string();
+                    cell.set_style(self.style);
                     } else {
-                        cell.symbol = "░".to_string();
-                        cell.set_style(self.track_style);
+                    cell.symbol = "░".to_string();
+                    cell.set_style(self.track_style);
                     }
-                }
+                });
             }
 
             if area.width > 1 {
                 for y in 0..area.height {
                     let buf_y = area.y + y;
                     for x in 1..area.width.min(3) {
-                        if let Some(cell) = buf.get_mut(area.x + x, buf_y) {
+                        buf.modify_cell(area.x + x, buf_y, |cell| {
                             cell.symbol = "│".to_string();
                             cell.set_style(self.track_style);
-                        }
+                        });
                     }
                 }
             }

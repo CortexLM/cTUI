@@ -186,10 +186,10 @@ impl Chart {
             let label_width = if self.show_labels {
                 let label: Vec<char> = point.label.chars().take(8).collect();
                 for (j, ch) in label.iter().enumerate() {
-                    if let Some(cell) = buf.get_mut(area.x + j as u16, y) {
+                    buf.modify_cell(area.x + j as u16, y, |cell| {
                         cell.symbol = ch.to_string();
                         cell.set_style(self.style);
-                    }
+                    });
                 }
                 label.len() + 1
             } else {
@@ -205,10 +205,10 @@ impl Chart {
             let filled_width = (normalized * bar_width as f64).round() as usize;
 
             for x in label_width..(label_width + filled_width).min(bar_width as usize) {
-                if let Some(cell) = buf.get_mut(area.x + x as u16, y) {
+                buf.modify_cell(area.x + x as u16, y, |cell| {
                     cell.symbol = '█'.to_string();
                     cell.set_style(point.style.unwrap_or(self.style));
-                }
+                });
             }
 
             if self.show_values && filled_width < bar_width as usize {
@@ -218,10 +218,10 @@ impl Chart {
                     if x_pos >= bar_width as usize {
                         break;
                     }
-                    if let Some(cell) = buf.get_mut(area.x + x_pos as u16, y) {
+                    buf.modify_cell(area.x + x_pos as u16, y, |cell| {
                         cell.symbol = ch.to_string();
                         cell.set_style(self.style);
-                    }
+                    });
                 }
             }
         }
@@ -256,10 +256,10 @@ impl Chart {
                 for col in 0..bar_width {
                     let x = x_start + col as u16;
                     if x < area.x + area.width {
-                        if let Some(cell) = buf.get_mut(x, y) {
+                        buf.modify_cell(x, y, |cell| {
                             cell.symbol = '█'.to_string();
                             cell.set_style(point.style.unwrap_or(self.style));
-                        }
+                        });
                     }
                 }
             }
@@ -270,10 +270,10 @@ impl Chart {
                     if j >= bar_width {
                         break;
                     }
-                    if let Some(cell) = buf.get_mut(x_start + j as u16, area.y + area.height - 1) {
+                    buf.modify_cell(x_start + j as u16, area.y + area.height - 1, |cell| {
                         cell.symbol = ch.to_string();
                         cell.set_style(self.style);
-                    }
+                    });
                 }
             }
         }
@@ -301,10 +301,10 @@ impl Chart {
             let y1 = area.y + chart_height.saturating_sub(1).saturating_sub(bar_h1);
             let y2 = area.y + chart_height.saturating_sub(1).saturating_sub(bar_h2);
 
-            if let Some(cell) = buf.get_mut(x1, y1) {
+            buf.modify_cell(x1, y1, |cell| {
                 cell.symbol = '●'.to_string();
                 cell.set_style(self.style);
-            }
+            });
 
             let dx = (x2 as i32 - x1 as i32).abs();
             let dy = (y2 as i32 - y1 as i32).abs();
@@ -317,10 +317,10 @@ impl Chart {
 
                 if x >= area.x && x < area.x + area.width && y >= area.y && y < area.y + area.height
                 {
-                    if let Some(cell) = buf.get_mut(x, y) {
+                    buf.modify_cell(x, y, |cell| {
                         cell.symbol = '·'.to_string();
                         cell.set_style(self.style);
-                    }
+                    });
                 }
             }
         }
@@ -331,10 +331,10 @@ impl Chart {
                 self.value_to_bar_height(last.value, min, max, chart_height as usize) as u16;
             let y = area.y + chart_height.saturating_sub(1).saturating_sub(bar_h);
 
-            if let Some(cell) = buf.get_mut(x, y) {
+            buf.modify_cell(x, y, |cell| {
                 cell.symbol = '●'.to_string();
                 cell.set_style(self.style);
-            }
+            });
         }
     }
 }
@@ -450,7 +450,7 @@ mod tests {
         let mut output = String::new();
         for y in 0..height {
             for x in 0..width {
-                output.push_str(&buf[(x, y)].symbol);
+                if let Some(cell) = buf.get(x, y) { output.push_str(&cell.symbol); }
             }
             if y < height - 1 {
                 output.push('\n');

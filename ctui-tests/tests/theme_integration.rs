@@ -219,9 +219,7 @@ impl Widget for ThemedWidget {
     fn render(self, area: Rect, buffer: &mut Buffer) {
         let text = &self.theme.name;
         for (i, ch) in text.chars().take(area.width as usize).enumerate() {
-            if let Some(cell) = buffer.get_mut(area.x + i as u16, area.y) {
-                cell.symbol = ch.to_string();
-            }
+            buffer.modify_cell(area.x + i as u16, area.y, |cell| { cell.symbol = ch.to_string(); });
         }
     }
 }
@@ -241,7 +239,7 @@ fn test_theme_render_integration() {
         .unwrap();
 
     let backend = terminal.backend();
-    assert_eq!(backend.buffer()[(0, 0)].symbol, "d");
+    assert_eq!(backend.buffer().get(0, 0).unwrap().symbol, "d");
 }
 
 #[test]

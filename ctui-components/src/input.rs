@@ -499,9 +499,7 @@ impl Component for Input {
 
         // Fill background with style
         for x in area.x..area.x + area.width {
-            if let Some(cell) = buf.get_mut(x, area.y) {
-                cell.set_style(self.style);
-            }
+            buf.modify_cell(x, area.y, |cell| { cell.set_style(self.style); });
         }
 
         // Render placeholder if empty
@@ -511,10 +509,10 @@ impl Component for Input {
                 let max_chars = (area.width as usize).min(placeholder_chars.len());
 
                 for (i, ch) in placeholder_chars.iter().take(max_chars).enumerate() {
-                    if let Some(cell) = buf.get_mut(area.x + i as u16, area.y) {
+                    buf.modify_cell(area.x + i as u16, area.y, |cell| {
                         cell.symbol = ch.to_string();
                         cell.set_style(self.placeholder_style);
-                    }
+                    });
                 }
             }
             return;
@@ -536,26 +534,25 @@ impl Component for Input {
             }
 
             let x = area.x + i as u16;
-            if let Some(cell) = buf.get_mut(x, area.y) {
+            buf.modify_cell(x, area.y, |cell| {
                 cell.symbol = chars.get(ch_idx).map(|c| c.to_string()).unwrap_or_default();
-
                 // Highlight cursor position
                 if ch_idx == self.cursor {
-                    cell.set_style(self.cursor_style);
+                cell.set_style(self.cursor_style);
                 } else {
-                    cell.set_style(self.style);
+                cell.set_style(self.style);
                 }
-            }
+            });
         }
 
         // If cursor is at end, render cursor position
         if self.cursor >= visible_end && self.cursor < area.x as usize + available_width {
             let cursor_x = area.x + (self.cursor - visible_start) as u16;
             if cursor_x < area.x + area.width {
-                if let Some(cell) = buf.get_mut(cursor_x, area.y) {
+                buf.modify_cell(cursor_x, area.y, |cell| {
                     cell.symbol = " ".to_string();
                     cell.set_style(self.cursor_style);
-                }
+                });
             }
         }
 
@@ -563,11 +560,11 @@ impl Component for Input {
         if self.cursor == chars.len() && self.cursor >= visible_start {
             let cursor_screen_pos = (self.cursor - visible_start) as u16;
             if cursor_screen_pos < area.width {
-                if let Some(cell) = buf.get_mut(area.x + cursor_screen_pos, area.y) {
+                buf.modify_cell(area.x + cursor_screen_pos, area.y, |cell| {
                     // Cursor is at end - show block cursor or underline
                     cell.symbol = " ".to_string();
                     cell.set_style(self.cursor_style);
-                }
+                });
             }
         }
     }
@@ -614,7 +611,7 @@ mod tests {
         let mut output = String::new();
         for y in 0..height {
             for x in 0..width {
-                output.push_str(&buf[(x, y)].symbol);
+                if let Some(cell) = buf.get(x, y) { output.push_str(&cell.symbol); }
             }
             if y < height - 1 {
                 output.push('\n');
@@ -948,7 +945,7 @@ mod tests {
         input.render(Rect::new(0, 0, 20, 1), &mut buf);
 
         // Should show placeholder
-        assert!(buf[(0, 0)].symbol.starts_with('E'));
+        assert!(buf.get(0, 0).unwrap().symbol.starts_with('E'));
     }
 
     #[test]
@@ -958,10 +955,10 @@ mod tests {
         let mut buf = Buffer::empty(Rect::new(0, 0, 20, 1));
         input.render(Rect::new(0, 0, 20, 1), &mut buf);
 
-        assert_eq!(buf[(0, 0)].symbol, "t");
-        assert_eq!(buf[(1, 0)].symbol, "e");
-        assert_eq!(buf[(2, 0)].symbol, "s");
-        assert_eq!(buf[(3, 0)].symbol, "t");
+        assert_eq!(buf.get(0, 0).unwrap().symbol, "t");
+        assert_eq!(buf.get(1, 0).unwrap().symbol, "e");
+        assert_eq!(buf.get(2, 0).unwrap().symbol, "s");
+        assert_eq!(buf.get(3, 0).unwrap().symbol, "t");
     }
 
     #[test]

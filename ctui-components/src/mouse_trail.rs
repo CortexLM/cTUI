@@ -239,16 +239,14 @@ impl Widget for MouseTrail {
                 continue;
             }
 
-            if let Some(cell) = buf.get_mut(buf_x, buf_y) {
+            buf.modify_cell(buf_x, buf_y, |cell| {
                 let fade_char = self.get_fade_char(index, total);
                 let color = self.interpolate_color(index, total);
-
                 if fade_char != ' ' {
-                    cell.symbol = fade_char.to_string();
+                cell.symbol = fade_char.to_string();
                 }
-
                 cell.fg = color;
-            }
+            });
         }
     }
 }
@@ -487,7 +485,7 @@ mod tests {
         trail.update(Position::new(5, 5));
 
         let buf = trail.to_buffer(20, 20);
-        for cell in &buf.content {
+        for cell in buf.iter() {
             assert_eq!(cell.symbol, " ");
         }
     }

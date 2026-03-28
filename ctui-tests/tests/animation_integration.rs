@@ -254,9 +254,7 @@ impl Widget for AnimatedWidget {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let width = (area.width as f32 * self.progress).min(area.width as f32) as u16;
         for x in area.x..area.x.saturating_add(width) {
-            if let Some(cell) = buf.get_mut(x, area.y) {
-                cell.symbol = "#".to_string();
-            }
+            buf.modify_cell(x, area.y, |cell| { cell.symbol = "#".to_string(); });
         }
     }
 }
@@ -281,7 +279,7 @@ fn test_animated_render_integration() {
     }
 
     let backend = terminal.backend();
-    assert_eq!(backend.buffer()[(0, 0)].symbol, "#");
+    assert_eq!(backend.buffer().get(0, 0).unwrap().symbol, "#");
 }
 
 #[test]

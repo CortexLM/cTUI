@@ -3,68 +3,24 @@
 //! This module provides a mock terminal backend that enables testing widgets
 //! and UI components without a real terminal. The `TestBackend` captures all
 //! rendered output in a buffer that can be inspected and asserted against.
-//!
-//! # Example
-//!
-//! ```ignore
-//! use ctui_core::backend::test::TestBackend;
-//! use ctui_core::{Buffer, Cell, Rect};
-//!
-//! let mut backend = TestBackend::new(20, 10);
-//!
-//! // Render content
-//! backend.draw(vec![
-//!     (0, 0, &Cell::new("H")),
-//!     (1, 0, &Cell::new("i")),
-//! ].into_iter())?;
-//!
-//! // Verify output
-//! assert_eq!(backend.buffer()[(0, 0)].symbol, "H");
-//! assert_eq!(backend.buffer()[(1, 0)].symbol, "i");
-//!
-//! // Or use assertions
-//! let expected = Buffer::empty(Rect::new(0, 0, 20, 10));
-//! backend.assert_buffer(&expected);
-//! ```
 
 use crate::buffer::Buffer;
 use crate::cell::Cell;
 use crate::geometry::Rect;
 use std::fmt;
 use std::io::Result;
-use std::ops::{Index, IndexMut};
 
 /// A test backend that captures rendered output in a buffer
-///
-/// This backend is designed for unit testing widgets without requiring
-/// a real terminal. It implements the Backend trait and provides methods
-/// to inspect and assert on the rendered content.
 #[derive(Clone, Debug)]
 pub struct TestBackend {
-    /// The main buffer for rendered content
     buffer: Buffer,
-    /// Scrollback buffer for terminal history (not used in basic testing)
     scrollback: Buffer,
-    /// Current cursor position
     cursor_pos: (u16, u16),
-    /// Whether cursor is visible
     cursor_visible: bool,
 }
 
 impl TestBackend {
     /// Creates a new `TestBackend` with the given dimensions
-    ///
-    /// # Arguments
-    ///
-    /// * `width` - Width of the terminal in columns
-    /// * `height` - Height of the terminal in rows
-    ///
-    /// # Example
-    ///
-    /// ```ignore
-    /// let backend = TestBackend::new(80, 24);
-    /// assert_eq!(backend.size(), Rect::new(0, 0, 80, 24));
-    /// ```
     #[must_use]
     pub fn new(width: u16, height: u16) -> Self {
         let area = Rect::new(0, 0, width, height);
@@ -129,21 +85,6 @@ impl TestBackend {
     }
 
     /// Asserts that the buffer matches the expected buffer
-    ///
-    /// This compares each cell in the buffer and panics with a detailed
-    /// message if any cell differs.
-    ///
-    /// # Example
-    ///
-    /// ```ignore
-    /// let mut backend = TestBackend::new(10, 5);
-    /// let expected = Buffer::empty(Rect::new(0, 0, 10, 5));
-    /// backend.assert_buffer(&expected); // passes
-    /// ```
-    ///
-    /// # Panics
-    ///
-    /// Panics if the buffer areas don't match or if any cell differs.
     pub fn assert_buffer(&self, expected: &Buffer) {
         assert_eq!(
             self.buffer.area, expected.area,
@@ -153,8 +94,8 @@ impl TestBackend {
 
         for y in 0..self.buffer.area.height {
             for x in 0..self.buffer.area.width {
-                let actual_cell = &self.buffer[(x, y)];
-                let expected_cell = &expected[(x, y)];
+                let actual_cell = self.buffer.get(x, y).unwrap_or_default();
+                let expected_cell = expected.get(x, y).unwrap_or_default();
 
                 assert_eq!(
                     actual_cell, expected_cell,
@@ -165,26 +106,6 @@ impl TestBackend {
     }
 
     /// Asserts that each line of the buffer matches the expected strings
-    ///
-    /// This is useful for quick assertions where you only care about the
-    /// text content, not the styling.
-    ///
-    /// # Arguments
-    ///
-    /// * `expected` - An iterator of strings, one per line
-    ///
-    /// # Example
-    ///
-    /// ```ignore
-    /// let mut backend = TestBackend::new(10, 3);
-    /// backend.draw(vec![(0, 0, &Cell::new("H")), (1, 0, &Cell::new("i"))].into_iter()).unwrap();
-    ///
-    /// backend.assert_buffer_lines(["Hi        ", "          ", "          "]);
-    /// ```
-    ///
-    /// # Panics
-    ///
-    /// Panics if the expected lines exceed buffer height or if any character differs.
     #[allow(clippy::cast_possible_truncation)]
     pub fn assert_buffer_lines<Lines>(&self, expected: Lines)
     where
@@ -210,7 +131,7 @@ impl TestBackend {
                     break;
                 }
 
-                let actual_cell = &self.buffer[(x, y)];
+                let actual_cell = self.buffer.get(x, y).unwrap_or_default();
                 let expected_symbol = expected_char.to_string();
 
                 assert_eq!(
@@ -220,11 +141,10 @@ impl TestBackend {
                 );
             }
 
-            // Check remaining cells in the line are empty
             let expected_line_len = expected_line.len() as u16;
             if expected_line_len < self.buffer.area.width {
                 for x in expected_line_len..self.buffer.area.width {
-                    let cell = &self.buffer[(x, y)];
+                    let cell = self.buffer.get(x, y).unwrap_or_default();
                     assert_eq!(
                         cell.symbol, " ",
                         "Expected empty cell at ({x}, {y}), got {:?}",
@@ -234,7 +154,6 @@ impl TestBackend {
             }
         }
 
-        // Check that we don't have more lines than expected
         assert_eq!(
             expected_lines.len(),
             self.buffer.area.height as usize,
@@ -245,30 +164,13 @@ impl TestBackend {
     }
 
     /// Renders the buffer as a string for snapshot testing
-    ///
-    /// Each line of the buffer is rendered as a string, with cells
-    /// joined together. This is useful for visual debugging and
-    /// snapshot testing with tools like `insta`.
-    ///
-    /// # Example
-    ///
-    /// ```ignore
-    /// let mut backend = TestBackend::new(3, 2);
-    /// backend.draw(vec![
-    ///     (0, 0, &Cell::new("A")),
-    ///     (1, 0, &Cell::new("B")),
-    ///     (2, 0, &Cell::new("C")),
-    /// ].into_iter()).unwrap();
-    ///
-    /// let output = backend.to_string();
-    /// assert_eq!(output, "ABC\n   ");
-    /// ```
     fn render_buffer(&self) -> String {
         let mut output = String::with_capacity(self.buffer.len());
 
         for y in 0..self.buffer.area.height {
             for x in 0..self.buffer.area.width {
-                output.push_str(&self.buffer[(x, y)].symbol);
+                let cell = self.buffer.get(x, y).unwrap_or_default();
+                output.push_str(&cell.symbol);
             }
             if y < self.buffer.area.height - 1 {
                 output.push('\n');
@@ -279,21 +181,14 @@ impl TestBackend {
     }
 
     /// Renders a line of the buffer as a string
-    ///
-    /// # Arguments
-    ///
-    /// * `y` - The line number (0-indexed)
-    ///
-    /// # Panics
-    ///
-    /// Panics if `y` is out of bounds.
     #[must_use]
     pub fn line_to_string(&self, y: u16) -> String {
         assert!(y < self.buffer.area.height, "Line {y} out of bounds");
 
         let mut line = String::with_capacity(self.buffer.area.width as usize);
         for x in 0..self.buffer.area.width {
-            line.push_str(&self.buffer[(x, y)].symbol);
+            let cell = self.buffer.get(x, y).unwrap_or_default();
+            line.push_str(&cell.symbol);
         }
         line
     }
@@ -305,8 +200,7 @@ impl TestBackend {
     }
 
     /// Appends current buffer to scrollback
-    pub fn scroll_up(&mut self, lines: u16) {
-        // Simple scroll implementation: move content up by `lines` rows
+    pub fn scroll_up_buffer(&mut self, lines: u16) {
         if lines >= self.buffer.area.height {
             self.buffer.reset();
             return;
@@ -314,30 +208,16 @@ impl TestBackend {
 
         for y in 0..(self.buffer.area.height - lines) {
             for x in 0..self.buffer.area.width {
-                let src = self.buffer[(x, y + lines)].clone();
-                self.buffer[(x, y)] = src;
+                if let Some(cell) = self.buffer.get(x, y + lines) {
+                    self.buffer.set(x, y, cell);
+                }
             }
         }
-        // Clear the bottom lines
         for y in (self.buffer.area.height - lines)..self.buffer.area.height {
             for x in 0..self.buffer.area.width {
-                self.buffer[(x, y)].reset();
+                self.buffer.set(x, y, Cell::default());
             }
         }
-    }
-}
-
-impl Index<(u16, u16)> for TestBackend {
-    type Output = Cell;
-
-    fn index(&self, pos: (u16, u16)) -> &Self::Output {
-        &self.buffer[pos]
-    }
-}
-
-impl IndexMut<(u16, u16)> for TestBackend {
-    fn index_mut(&mut self, pos: (u16, u16)) -> &mut Self::Output {
-        &mut self.buffer[pos]
     }
 }
 
@@ -348,16 +228,13 @@ impl fmt::Display for TestBackend {
 }
 
 impl super::Backend for TestBackend {
-    /// Draws content to the buffer
-    ///
-    /// Each item in the iterator is a tuple of (x, y, cell).
-    fn draw<'a, I>(&mut self, content: I) -> Result<()>
+    fn draw<I>(&mut self, content: I) -> Result<()>
     where
-        I: Iterator<Item = (u16, u16, &'a Cell)>,
+        I: Iterator<Item = (u16, u16, Cell)>,
     {
         for (x, y, cell) in content {
             if x < self.buffer.area.width && y < self.buffer.area.height {
-                self.buffer[(x, y)] = cell.clone();
+                self.buffer.set(x, y, cell);
             }
         }
         Ok(())
@@ -369,7 +246,6 @@ impl super::Backend for TestBackend {
     }
 
     fn flush(&mut self) -> Result<()> {
-        // No-op for test backend
         Ok(())
     }
 
@@ -397,7 +273,7 @@ impl super::Backend for TestBackend {
     }
 
     fn scroll_up(&mut self, n: u16) -> Result<()> {
-        self.scroll_up(n);
+        self.scroll_up_buffer(n);
         Ok(())
     }
 
@@ -409,15 +285,15 @@ impl super::Backend for TestBackend {
 
         for y in (0..(self.buffer.area.height - n)).rev() {
             for x in 0..self.buffer.area.width {
-                let src_y = y;
                 let dst_y = y + n;
-                let src = self.buffer[(x, src_y)].clone();
-                self.buffer[(x, dst_y)] = src;
+                if let Some(cell) = self.buffer.get(x, y) {
+                    self.buffer.set(x, dst_y, cell);
+                }
             }
         }
         for y in 0..n {
             for x in 0..self.buffer.area.width {
-                self.buffer[(x, y)].reset();
+                self.buffer.set(x, y, Cell::default());
             }
         }
         Ok(())
@@ -443,9 +319,7 @@ impl super::Backend for TestBackend {
     fn clear_region(&mut self, area: Rect) -> Result<()> {
         for y in area.y..area.y.saturating_add(area.height) {
             for x in area.x..area.x.saturating_add(area.width) {
-                if let Some(cell) = self.buffer.get_mut(x, y) {
-                    cell.reset();
-                }
+                self.buffer.set(x, y, Cell::default());
             }
         }
         Ok(())
@@ -474,47 +348,42 @@ mod tests {
         backend
             .draw(
                 vec![
-                    (0, 0, &Cell::new("H")),
-                    (1, 0, &Cell::new("e")),
-                    (2, 0, &Cell::new("l")),
-                    (3, 0, &Cell::new("l")),
-                    (4, 0, &Cell::new("o")),
+                    (0, 0, Cell::new("H")),
+                    (1, 0, Cell::new("e")),
+                    (2, 0, Cell::new("l")),
+                    (3, 0, Cell::new("l")),
+                    (4, 0, Cell::new("o")),
                 ]
                 .into_iter(),
             )
             .unwrap();
 
-        assert_eq!(backend[(0, 0)].symbol, "H");
-        assert_eq!(backend[(1, 0)].symbol, "e");
-        assert_eq!(backend[(2, 0)].symbol, "l");
-        assert_eq!(backend[(3, 0)].symbol, "l");
-        assert_eq!(backend[(4, 0)].symbol, "o");
+        assert_eq!(backend.buffer.get(0, 0).unwrap().symbol, "H");
+        assert_eq!(backend.buffer.get(1, 0).unwrap().symbol, "e");
+        assert_eq!(backend.buffer.get(2, 0).unwrap().symbol, "l");
+        assert_eq!(backend.buffer.get(3, 0).unwrap().symbol, "l");
+        assert_eq!(backend.buffer.get(4, 0).unwrap().symbol, "o");
 
-        // Check that other cells are empty
-        assert_eq!(backend[(5, 0)].symbol, " ");
-        assert_eq!(backend[(0, 1)].symbol, " ");
+        assert_eq!(backend.buffer.get(5, 0).unwrap().symbol, " ");
+        assert_eq!(backend.buffer.get(0, 1).unwrap().symbol, " ");
     }
 
     #[test]
     fn test_test_backend_draw_out_of_bounds() {
         let mut backend = TestBackend::new(5, 5);
 
-        // Drawing out of bounds should not panic
         backend
             .draw(
                 vec![
-                    (10, 0, &Cell::new("X")), // Out of bounds
-                    (0, 10, &Cell::new("Y")), // Out of bounds
-                    (2, 2, &Cell::new("Z")),  // In bounds
+                    (10, 0, Cell::new("X")),
+                    (0, 10, Cell::new("Y")),
+                    (2, 2, Cell::new("Z")),
                 ]
                 .into_iter(),
             )
             .unwrap();
 
-        // Only the in-bounds cell should be drawn
-        assert_eq!(backend[(2, 2)].symbol, "Z");
-
-        // The backend should not have crashed
+        assert_eq!(backend.buffer.get(2, 2).unwrap().symbol, "Z");
         assert_eq!(backend.buffer().len(), 25);
     }
 
@@ -523,15 +392,12 @@ mod tests {
         let mut backend = TestBackend::new(10, 5);
         let expected = Buffer::empty(Rect::new(0, 0, 10, 5));
 
-        // Should not panic for matching buffers
         backend.assert_buffer(&expected);
 
-        // Draw some content
         backend
-            .draw(vec![(0, 0, &Cell::new("X"))].into_iter())
+            .draw(vec![(0, 0, Cell::new("X"))].into_iter())
             .unwrap();
 
-        // Should panic for non-matching buffer
         let result = std::panic::catch_unwind(|| {
             backend.assert_buffer(&expected);
         });
@@ -545,11 +411,11 @@ mod tests {
         backend
             .draw(
                 vec![
-                    (0, 0, &Cell::new("H")),
-                    (1, 0, &Cell::new("i")),
-                    (0, 1, &Cell::new("B")),
-                    (1, 1, &Cell::new("y")),
-                    (2, 1, &Cell::new("e")),
+                    (0, 0, Cell::new("H")),
+                    (1, 0, Cell::new("i")),
+                    (0, 1, Cell::new("B")),
+                    (1, 1, Cell::new("y")),
+                    (2, 1, Cell::new("e")),
                 ]
                 .into_iter(),
             )
@@ -564,10 +430,9 @@ mod tests {
         let mut backend = TestBackend::new(5, 2);
 
         backend
-            .draw(vec![(0, 0, &Cell::new("H")), (1, 0, &Cell::new("i"))].into_iter())
+            .draw(vec![(0, 0, Cell::new("H")), (1, 0, Cell::new("i"))].into_iter())
             .unwrap();
 
-        // This should panic
         backend.assert_buffer_lines(&["Hello", "     "]);
     }
 
@@ -578,11 +443,11 @@ mod tests {
         backend
             .draw(
                 vec![
-                    (0, 0, &Cell::new("A")),
-                    (1, 0, &Cell::new("B")),
-                    (2, 0, &Cell::new("C")),
-                    (0, 1, &Cell::new("D")),
-                    (1, 1, &Cell::new("E")),
+                    (0, 0, Cell::new("A")),
+                    (1, 0, Cell::new("B")),
+                    (2, 0, Cell::new("C")),
+                    (0, 1, Cell::new("D")),
+                    (1, 1, Cell::new("E")),
                 ]
                 .into_iter(),
             )
@@ -599,12 +464,12 @@ mod tests {
         backend
             .draw(
                 vec![
-                    (0, 0, &Cell::new("L")),
-                    (1, 0, &Cell::new("1")),
-                    (0, 1, &Cell::new("L")),
-                    (1, 1, &Cell::new("2")),
-                    (0, 2, &Cell::new("L")),
-                    (1, 2, &Cell::new("3")),
+                    (0, 0, Cell::new("L")),
+                    (1, 0, Cell::new("1")),
+                    (0, 1, Cell::new("L")),
+                    (1, 1, Cell::new("2")),
+                    (0, 2, Cell::new("L")),
+                    (1, 2, Cell::new("3")),
                 ]
                 .into_iter(),
             )
@@ -633,23 +498,22 @@ mod tests {
     fn test_scroll() {
         let mut backend = TestBackend::new(5, 3);
 
-        // Fill with different content per line
         backend
             .draw(
                 vec![
-                    (0, 0, &Cell::new("A")),
-                    (0, 1, &Cell::new("B")),
-                    (0, 2, &Cell::new("C")),
+                    (0, 0, Cell::new("A")),
+                    (0, 1, Cell::new("B")),
+                    (0, 2, Cell::new("C")),
                 ]
                 .into_iter(),
             )
             .unwrap();
 
-        backend.scroll_up(1);
+        backend.scroll_up_buffer(1);
 
-        assert_eq!(backend[(0, 0)].symbol, "B");
-        assert_eq!(backend[(0, 1)].symbol, "C");
-        assert_eq!(backend[(0, 2)].symbol, " ");
+        assert_eq!(backend.buffer.get(0, 0).unwrap().symbol, "B");
+        assert_eq!(backend.buffer.get(0, 1).unwrap().symbol, "C");
+        assert_eq!(backend.buffer.get(0, 2).unwrap().symbol, " ");
     }
 
     #[test]
@@ -657,15 +521,14 @@ mod tests {
         let mut backend = TestBackend::new(10, 5);
 
         backend
-            .draw(vec![(0, 0, &Cell::new("X"))].into_iter())
+            .draw(vec![(0, 0, Cell::new("X"))].into_iter())
             .unwrap();
 
         backend.clear_screen();
 
-        // All cells should be reset
         for y in 0..5 {
             for x in 0..10 {
-                assert_eq!(backend[(x, y)].symbol, " ");
+                assert_eq!(backend.buffer.get(x, y).unwrap().symbol, " ");
             }
         }
     }
@@ -674,25 +537,20 @@ mod tests {
     fn test_backend_trait() {
         let mut backend = TestBackend::new(20, 10);
 
-        // Test draw
-        Backend::draw(&mut backend, vec![(0, 0, &Cell::new("T"))].into_iter()).unwrap();
-        assert_eq!(backend[(0, 0)].symbol, "T");
+        Backend::draw(&mut backend, vec![(0, 0, Cell::new("T"))].into_iter()).unwrap();
+        assert_eq!(backend.buffer.get(0, 0).unwrap().symbol, "T");
 
-        // Test clear
         Backend::clear(&mut backend).unwrap();
-        assert_eq!(backend[(0, 0)].symbol, " ");
+        assert_eq!(backend.buffer.get(0, 0).unwrap().symbol, " ");
 
-        // Test size
         assert_eq!(Backend::size(&backend).unwrap(), Rect::new(0, 0, 20, 10));
 
-        // Test cursor
         Backend::set_cursor(&mut backend, 5, 3).unwrap();
         assert_eq!(Backend::cursor_pos(&backend).unwrap(), (5, 3));
 
         Backend::show_cursor(&mut backend).unwrap();
         Backend::hide_cursor(&mut backend).unwrap();
 
-        // Test flush (no-op)
         Backend::flush(&mut backend).unwrap();
     }
 }

@@ -127,9 +127,9 @@ pub trait Backend {
     /// # Errors
     ///
     /// Returns an error if drawing to the terminal fails.
-    fn draw<'a, I>(&mut self, content: I) -> io::Result<()>
+    fn draw<I>(&mut self, content: I) -> io::Result<()>
     where
-        I: Iterator<Item = (u16, u16, &'a Cell)>;
+        I: Iterator<Item = (u16, u16, Cell)>;
 
     /// Clears the terminal screen
     ///

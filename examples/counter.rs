@@ -33,9 +33,7 @@ impl Component for Counter {
     fn render(&self, area: Rect, buf: &mut Buffer) {
         let text = format!("Counter: {}", self.count);
         for (i, ch) in text.chars().take(area.width as usize).enumerate() {
-            if let Some(cell) = buf.get_mut(area.x + i as u16, area.y) {
-                cell.symbol = ch.to_string();
-            }
+            buf.modify_cell(area.x + i as u16, area.y, |cell| { cell.symbol = ch.to_string(); });
         }
     }
 

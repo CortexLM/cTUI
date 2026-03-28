@@ -40,9 +40,7 @@ impl Component for CounterComponent {
     fn render(&self, area: Rect, buf: &mut Buffer) {
         let text = format!("Count: {}", self.count);
         for (i, ch) in text.chars().take(area.width as usize).enumerate() {
-            if let Some(cell) = buf.get_mut(area.x + i as u16, area.y) {
-                cell.symbol = ch.to_string();
-            }
+            buf.modify_cell(area.x + i as u16, area.y, |cell| { cell.symbol = ch.to_string(); });
         }
     }
 
@@ -122,10 +120,10 @@ fn test_component_render_to_buffer() {
 
     counter.render(Rect::new(0, 0, 20, 1), &mut buf);
 
-    assert_eq!(buf[(0, 0)].symbol, "C");
-    assert_eq!(buf[(1, 0)].symbol, "o");
-    assert_eq!(buf[(5, 0)].symbol, ":");
-    assert_eq!(buf[(7, 0)].symbol, "4");
+    assert_eq!(buf.get(0, 0).unwrap().symbol, "C");
+    assert_eq!(buf.get(1, 0).unwrap().symbol, "o");
+    assert_eq!(buf.get(5, 0).unwrap().symbol, ":");
+    assert_eq!(buf.get(7, 0).unwrap().symbol, "4");
 }
 
 #[test]
@@ -151,7 +149,7 @@ fn test_component_render_with_terminal() {
         .unwrap();
 
     let backend = terminal.backend();
-    assert_eq!(backend.buffer()[(0, 0)].symbol, "C");
+    assert_eq!(backend.buffer().get(0, 0).unwrap().symbol, "C");
 }
 
 #[test]
@@ -187,7 +185,7 @@ fn test_cmd_render_trigger() {
         .unwrap();
 
     let backend = terminal.backend();
-    assert_eq!(backend.buffer()[(7, 0)].symbol, "1");
+    assert_eq!(backend.buffer().get(7, 0).unwrap().symbol, "1");
 }
 
 #[test]
@@ -310,9 +308,7 @@ impl Component for ToggleComponent {
     fn render(&self, area: Rect, buf: &mut Buffer) {
         let text = if self.is_on { "[ON]" } else { "[OFF]" };
         for (i, ch) in text.chars().take(area.width as usize).enumerate() {
-            if let Some(cell) = buf.get_mut(area.x + i as u16, area.y) {
-                cell.symbol = ch.to_string();
-            }
+            buf.modify_cell(area.x + i as u16, area.y, |cell| { cell.symbol = ch.to_string(); });
         }
     }
 
@@ -336,9 +332,9 @@ fn test_toggle_component_states() {
 
     let mut buf = Buffer::empty(Rect::new(0, 0, 6, 1));
     toggle.render(Rect::new(0, 0, 6, 1), &mut buf);
-    assert_eq!(buf[(1, 0)].symbol, "O");
-    assert_eq!(buf[(2, 0)].symbol, "F");
-    assert_eq!(buf[(3, 0)].symbol, "F");
+    assert_eq!(buf.get(1, 0).unwrap().symbol, "O");
+    assert_eq!(buf.get(2, 0).unwrap().symbol, "F");
+    assert_eq!(buf.get(3, 0).unwrap().symbol, "F");
 }
 
 #[test]

@@ -351,9 +351,7 @@ fn test_render_with_layout() {
         fn render(self, area: Rect, buffer: &mut Buffer) {
             for y in area.y..area.y.saturating_add(area.height) {
                 for x in area.x..area.x.saturating_add(area.width) {
-                    if let Some(cell) = buffer.get_mut(x, y) {
-                        cell.symbol = self.id.to_string();
-                    }
+                    buffer.modify_cell(x, y, |cell| { cell.symbol = self.id.to_string(); });
                 }
             }
         }
@@ -381,9 +379,9 @@ fn test_render_with_layout() {
         .unwrap();
 
     let backend = terminal.backend();
-    assert_eq!(backend.buffer()[(0, 0)].symbol, "A");
-    assert_eq!(backend.buffer()[(20, 0)].symbol, "B");
-    assert_eq!(backend.buffer()[(50, 0)].symbol, "C");
+    assert_eq!(backend.buffer().get(0, 0).unwrap().symbol, "A");
+    assert_eq!(backend.buffer().get(20, 0).unwrap().symbol, "B");
+    assert_eq!(backend.buffer().get(50, 0).unwrap().symbol, "C");
 }
 
 #[test]

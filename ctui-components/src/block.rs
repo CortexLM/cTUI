@@ -195,27 +195,27 @@ impl Block {
         let top_y = area.y;
 
         if has_left {
-            if let Some(cell) = buf.get_mut(left_pos, top_y) {
+            buf.modify_cell(left_pos, top_y, |cell| {
                 cell.symbol = chars.top_left.to_string();
                 cell.set_style(self.style);
-            }
+            });
         }
 
         if has_right && area.width > 1 {
-            if let Some(cell) = buf.get_mut(right_pos, top_y) {
+            buf.modify_cell(right_pos, top_y, |cell| {
                 cell.symbol = chars.top_right.to_string();
                 cell.set_style(self.style);
-            }
+            });
         }
 
         let start_x = if has_left { left_pos + 1 } else { left_pos };
         let end_x = if has_right { right_pos } else { right_pos + 1 };
 
         for x in start_x..end_x {
-            if let Some(cell) = buf.get_mut(x, top_y) {
+            buf.modify_cell(x, top_y, |cell| {
                 cell.symbol = chars.horizontal.to_string();
                 cell.set_style(self.style);
-            }
+            });
         }
     }
 
@@ -233,27 +233,27 @@ impl Block {
         let bottom_y = area.y + area.height.saturating_sub(1);
 
         if has_left {
-            if let Some(cell) = buf.get_mut(left_pos, bottom_y) {
+            buf.modify_cell(left_pos, bottom_y, |cell| {
                 cell.symbol = chars.bottom_left.to_string();
                 cell.set_style(self.style);
-            }
+            });
         }
 
         if has_right && area.width > 1 {
-            if let Some(cell) = buf.get_mut(right_pos, bottom_y) {
+            buf.modify_cell(right_pos, bottom_y, |cell| {
                 cell.symbol = chars.bottom_right.to_string();
                 cell.set_style(self.style);
-            }
+            });
         }
 
         let start_x = if has_left { left_pos + 1 } else { left_pos };
         let end_x = if has_right { right_pos } else { right_pos + 1 };
 
         for x in start_x..end_x {
-            if let Some(cell) = buf.get_mut(x, bottom_y) {
+            buf.modify_cell(x, bottom_y, |cell| {
                 cell.symbol = chars.horizontal.to_string();
                 cell.set_style(self.style);
-            }
+            });
         }
     }
 
@@ -275,10 +275,10 @@ impl Block {
         };
 
         for y in start_y..end_y {
-            if let Some(cell) = buf.get_mut(left_x, y) {
+            buf.modify_cell(left_x, y, |cell| {
                 cell.symbol = chars.vertical.to_string();
                 cell.set_style(self.style);
-            }
+            });
         }
     }
 
@@ -300,10 +300,10 @@ impl Block {
         };
 
         for y in start_y..end_y {
-            if let Some(cell) = buf.get_mut(right_x, y) {
+            buf.modify_cell(right_x, y, |cell| {
                 cell.symbol = chars.vertical.to_string();
                 cell.set_style(self.style);
-            }
+            });
         }
     }
 
@@ -346,10 +346,10 @@ impl Block {
             if x >= end_x {
                 break;
             }
-            if let Some(cell) = buf.get_mut(x, area.y) {
+            buf.modify_cell(x, area.y, |cell| {
                 cell.symbol = ch.to_string();
                 cell.set_style(self.style);
-            }
+            });
         }
     }
 
@@ -393,10 +393,10 @@ impl Block {
             if x >= end_x {
                 break;
             }
-            if let Some(cell) = buf.get_mut(x, bottom_y) {
+            buf.modify_cell(x, bottom_y, |cell| {
                 cell.symbol = ch.to_string();
                 cell.set_style(self.style);
-            }
+            });
         }
     }
 
@@ -439,10 +439,10 @@ impl Block {
             if y >= end_y {
                 break;
             }
-            if let Some(cell) = buf.get_mut(area.x, y) {
+            buf.modify_cell(area.x, y, |cell| {
                 cell.symbol = ch.to_string();
                 cell.set_style(self.style);
-            }
+            });
         }
     }
 
@@ -486,10 +486,10 @@ impl Block {
             if y >= end_y {
                 break;
             }
-            if let Some(cell) = buf.get_mut(right_x, y) {
+            buf.modify_cell(right_x, y, |cell| {
                 cell.symbol = ch.to_string();
                 cell.set_style(self.style);
-            }
+            });
         }
     }
 }
@@ -554,7 +554,7 @@ mod tests {
         let mut output = String::new();
         for y in 0..height {
             for x in 0..width {
-                output.push_str(&buf[(x, y)].symbol);
+                if let Some(cell) = buf.get(x, y) { output.push_str(&cell.symbol); }
             }
             if y < height - 1 {
                 output.push('\n');
@@ -729,7 +729,7 @@ mod tests {
         let block = Block::new().borders(Borders::ALL);
         let mut buf = Buffer::empty(Rect::new(0, 0, 1, 1));
         block.render(Rect::new(0, 0, 0, 0), &mut buf);
-        assert_eq!(buf[(0, 0)].symbol, " ");
+        assert_eq!(buf.get(0, 0).unwrap().symbol, " ");
     }
 
     #[test]

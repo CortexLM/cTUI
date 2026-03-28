@@ -34,18 +34,14 @@ impl Component for CounterApp {
     fn render(&self, area: Rect, buf: &mut Buffer) {
         let text = format!("Counter: {}", self.count);
         for (i, ch) in text.chars().take(area.width as usize).enumerate() {
-            if let Some(cell) = buf.get_mut(area.x + i as u16, area.y) {
-                cell.symbol = ch.to_string();
-            }
+            buf.modify_cell(area.x + i as u16, area.y, |cell| { cell.symbol = ch.to_string(); });
         }
 
         let help_text = "Press +/- or r to reset";
         let start_x = area.x + 2;
         if area.height > 1 {
             for (i, ch) in help_text.chars().take(area.width as usize).enumerate() {
-                if let Some(cell) = buf.get_mut(start_x + i as u16, area.y + 1) {
-                    cell.symbol = ch.to_string();
-                }
+                buf.modify_cell(start_x + i as u16, area.y + 1, |cell| { cell.symbol = ch.to_string(); });
             }
         }
     }
@@ -82,9 +78,9 @@ fn test_counter_full_lifecycle() {
         .unwrap();
 
     let backend = terminal.backend();
-    assert_eq!(backend.buffer()[(0, 0)].symbol, "C");
-    assert_eq!(backend.buffer()[(7, 0)].symbol, ":");
-    assert_eq!(backend.buffer()[(9, 0)].symbol, "0");
+    assert_eq!(backend.buffer().get(0, 0).unwrap().symbol, "C");
+    assert_eq!(backend.buffer().get(7, 0).unwrap().symbol, ":");
+    assert_eq!(backend.buffer().get(9, 0).unwrap().symbol, "0");
 
     counter.update(Box::new(Increment));
     counter.update(Box::new(Increment));
@@ -99,7 +95,7 @@ fn test_counter_full_lifecycle() {
         .unwrap();
 
     let backend = terminal.backend();
-    assert_eq!(backend.buffer()[(9, 0)].symbol, "3");
+    assert_eq!(backend.buffer().get(9, 0).unwrap().symbol, "3");
 
     counter.update(Box::new(Decrement));
     assert_eq!(counter.count, 2);
@@ -166,9 +162,7 @@ impl Component for TodoApp {
     fn render(&self, area: Rect, buf: &mut Buffer) {
         let title = "Todo List";
         for (i, ch) in title.chars().take(area.width as usize).enumerate() {
-            if let Some(cell) = buf.get_mut(area.x + i as u16, area.y) {
-                cell.symbol = ch.to_string();
-            }
+            buf.modify_cell(area.x + i as u16, area.y, |cell| { cell.symbol = ch.to_string(); });
         }
 
         for (idx, item) in self.items.iter().enumerate() {
@@ -179,9 +173,7 @@ impl Component for TodoApp {
             let check = if item.completed { "[x] " } else { "[ ] " };
             let text = format!("{}{}", check, item.text);
             for (i, ch) in text.chars().take(area.width as usize).enumerate() {
-                if let Some(cell) = buf.get_mut(area.x + i as u16, y) {
-                    cell.symbol = ch.to_string();
-                }
+                buf.modify_cell(area.x + i as u16, y, |cell| { cell.symbol = ch.to_string(); });
             }
         }
     }
@@ -236,10 +228,10 @@ fn test_todo_full_lifecycle() {
         .unwrap();
 
     let backend = terminal.backend();
-    assert_eq!(backend.buffer()[(0, 0)].symbol, "T");
-    assert_eq!(backend.buffer()[(0, 2)].symbol, "[");
-    assert_eq!(backend.buffer()[(1, 2)].symbol, " ");
-    assert_eq!(backend.buffer()[(2, 2)].symbol, "]");
+    assert_eq!(backend.buffer().get(0, 0).unwrap().symbol, "T");
+    assert_eq!(backend.buffer().get(0, 2).unwrap().symbol, "[");
+    assert_eq!(backend.buffer().get(1, 2).unwrap().symbol, " ");
+    assert_eq!(backend.buffer().get(2, 2).unwrap().symbol, "]");
 }
 
 #[test]
@@ -314,20 +306,12 @@ struct DashboardWidget {
 impl Widget for DashboardWidget {
     fn render(self, area: Rect, buffer: &mut Buffer) {
         for x in area.x..area.x.saturating_add(area.width) {
-            if let Some(cell) = buffer.get_mut(x, area.y) {
-                cell.symbol = "═".to_string();
-            }
-            if let Some(cell) = buffer.get_mut(x, area.y + area.height.saturating_sub(1)) {
-                cell.symbol = "═".to_string();
-            }
+            buffer.modify_cell(x, area.y, |cell| { cell.symbol = "═".to_string(); });
+            buffer.modify_cell(x, area.y + area.height.saturating_sub(1), |cell| { cell.symbol = "═".to_string(); });
         }
         for y in area.y..area.y.saturating_add(area.height) {
-            if let Some(cell) = buffer.get_mut(area.x, y) {
-                cell.symbol = "║".to_string();
-            }
-            if let Some(cell) = buffer.get_mut(area.x + area.width.saturating_sub(1), y) {
-                cell.symbol = "║".to_string();
-            }
+            buffer.modify_cell(area.x, y, |cell| { cell.symbol = "║".to_string(); });
+            buffer.modify_cell(area.x + area.width.saturating_sub(1), y, |cell| { cell.symbol = "║".to_string(); });
         }
 
         let inner = Rect::new(
@@ -338,9 +322,7 @@ impl Widget for DashboardWidget {
         );
         let text = format!("{}: {}", self.title, self.value);
         for (i, ch) in text.chars().take(inner.width as usize).enumerate() {
-            if let Some(cell) = buffer.get_mut(inner.x + i as u16, inner.y) {
-                cell.symbol = ch.to_string();
-            }
+            buffer.modify_cell(inner.x + i as u16, inner.y, |cell| { cell.symbol = ch.to_string(); });
         }
     }
 }
@@ -384,7 +366,7 @@ fn test_dashboard_layout() {
         .unwrap();
 
     let backend = terminal.backend();
-    assert_eq!(backend.buffer()[(1, 1)].symbol, "P");
+    assert_eq!(backend.buffer().get(1, 1).unwrap().symbol, "P");
 }
 
 #[test]
@@ -435,7 +417,7 @@ fn test_render_resize_rerender() {
         .unwrap();
 
     let backend = terminal.backend();
-    assert_eq!(backend.buffer()[(9, 0)].symbol, "5");
+    assert_eq!(backend.buffer().get(9, 0).unwrap().symbol, "5");
 }
 
 #[test]
