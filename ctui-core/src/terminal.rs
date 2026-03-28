@@ -152,9 +152,24 @@ impl<B: Backend> Drop for Terminal<B> {
     }
 }
 
+/// A pending render operation with its z-index for layering
+struct PendingRender {
+    z_index: i32,
+    area: Rect,
+    buffer: Buffer,
+}
+
 /// A frame represents a single render pass
+///
+/// # Z-Index Layering
+///
+/// Widgets rendered via `render_widget` are tracked with their z-index.
+/// When the frame is dropped, all pending renders are sorted by z-index
+/// (lowest first) and applied to the main buffer. Higher z-index values
+/// render on top of lower values.
 pub struct Frame<'a> {
     buffer: &'a mut Buffer,
+    pending: Vec<PendingRender>,
 }
 
 /// Result of a completed render operation
@@ -226,6 +241,7 @@ impl<B: Backend> Terminal<B> {
         {
             let mut frame = Frame {
                 buffer: self.prev_buffer_mut(),
+                pending: Vec::new(),
             };
             render_fn(&mut frame);
             completed_buffer = frame.buffer.clone();
@@ -572,9 +588,37 @@ impl<B: Backend> Terminal<B> {
 }
 
 impl Frame<'_> {
-    /// Renders a widget in the given area
+    /// Renders a widget in the given area, respecting z-index layering.
+    ///
+    /// Widgets are buffered and sorted by z-index before being applied to
+    /// the main buffer. Higher z-index values render on top of lower values.
     pub fn render_widget<W: Widget>(&mut self, widget: W, area: Rect) {
-        widget.render(area, self.buffer);
+        let z_index = widget.z_index();
+        let mut layer_buffer = Buffer::empty(area);
+        widget.render(area, &mut layer_buffer);
+        self.pending.push(PendingRender {
+            z_index,
+            area,
+            buffer: layer_buffer,
+        });
+    }
+
+    /// Immediately applies all pending renders to the buffer.
+    ///
+    /// Sorts pending renders by z-index (lowest first) and merges them
+    /// into the main buffer. After this call, the pending queue is empty.
+    pub fn flush(&mut self) {
+        self.pending.sort_by_key(|r| r.z_index);
+        for render in self.pending.drain(..) {
+            // Copy each cell from the layer buffer to the main buffer
+            for y in render.area.y..render.area.y.saturating_add(render.area.height) {
+                for x in render.area.x..render.area.x.saturating_add(render.area.width) {
+                    if let Some(cell) = render.buffer.get(x, y) {
+                        self.buffer.set(x, y, cell);
+                    }
+                }
+            }
+        }
     }
 
     /// Returns the frame area
@@ -600,6 +644,12 @@ impl Deref for Frame<'_> {
 impl DerefMut for Frame<'_> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         self.buffer
+    }
+}
+
+impl Drop for Frame<'_> {
+    fn drop(&mut self) {
+        self.flush();
     }
 }
 
@@ -678,6 +728,7 @@ mod tests {
         let buffer = terminal.current_buffer().clone();
         let frame = Frame {
             buffer: &mut buffer.clone(),
+            pending: Vec::new(),
         };
 
         assert_eq!(frame.area().width, 80);
@@ -690,6 +741,7 @@ mod tests {
         let buffer = terminal.current_buffer().clone();
         let mut frame = Frame {
             buffer: &mut buffer.clone(),
+            pending: Vec::new(),
         };
 
         struct TestWidget;
@@ -707,10 +759,77 @@ mod tests {
 
         let widget_area = Rect::new(5, 5, 10, 5);
         frame.render_widget(TestWidget, widget_area);
+        frame.flush();  // Apply pending renders before checking
 
         assert_eq!(frame.buffer.get(5, 5).unwrap().symbol, "X");
         assert_eq!(frame.buffer.get(14, 9).unwrap().symbol, "X");
         assert_eq!(frame.buffer.get(0, 0).unwrap().symbol, " ");
+    }
+
+    #[test]
+    fn test_frame_z_index_ordering() {
+        let terminal = test_terminal();
+        let buffer = terminal.current_buffer().clone();
+        let mut frame = Frame {
+            buffer: &mut buffer.clone(),
+            pending: Vec::new(),
+        };
+
+        // Widget with higher z-index (renders on top)
+        struct TopWidget;
+        impl Widget for TopWidget {
+            fn render(self, area: Rect, buffer: &mut Buffer) {
+                for y in area.y..area.y + area.height {
+                    for x in area.x..area.x + area.width {
+                        buffer.modify_cell(x, y, |cell| {
+                            cell.symbol = "T".to_string();
+                        });
+                    }
+                }
+            }
+            fn z_index(&self) -> i32 {
+                10
+            }
+        }
+
+        // Widget with lower z-index (renders first, gets overwritten)
+        struct BottomWidget;
+        impl Widget for BottomWidget {
+            fn render(self, area: Rect, buffer: &mut Buffer) {
+                for y in area.y..area.y + area.height {
+                    for x in area.x..area.x + area.width {
+                        buffer.modify_cell(x, y, |cell| {
+                            cell.symbol = "B".to_string();
+                        });
+                    }
+                }
+            }
+            fn z_index(&self) -> i32 {
+                1
+            }
+        }
+
+        let widget_area = Rect::new(0, 0, 5, 5);
+
+        // Render higher z-index first, then lower z-index
+        frame.render_widget(TopWidget, widget_area);
+        frame.render_widget(BottomWidget, widget_area);
+        frame.flush();
+
+        // Higher z-index should win - "T" should be visible
+        assert_eq!(frame.buffer.get(0, 0).unwrap().symbol, "T");
+        assert_eq!(frame.buffer.get(2, 2).unwrap().symbol, "T");
+    }
+
+    #[test]
+    fn test_z_index_default_is_zero() {
+        // Verify default z_index is 0
+        struct DefaultWidget;
+        impl Widget for DefaultWidget {
+            fn render(self, _area: Rect, _buffer: &mut Buffer) {}
+        }
+        let widget = DefaultWidget;
+        assert_eq!(widget.z_index(), 0);
     }
 
     #[test]

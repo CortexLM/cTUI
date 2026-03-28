@@ -72,6 +72,13 @@ impl<'prev, 'next> BufferDiff<'prev, 'next> {
         Some((x, y, cell))
     }
 
+    /// Fast path: compare PackedCell bytes directly before unpacking.
+    /// PackedCell derives PartialEq, so this is a simple 8-byte bitwise compare.
+    /// Only falls back to expensive unpacking if packed cells differ.
+    /// 
+    /// IMPORTANT: Fast path is only valid when both buffers share the same
+    /// SymbolTable. Different tables may assign different symbol_ids to the
+    /// same strings, so we must check Arc::ptr_eq first.
     #[allow(clippy::significant_drop_tightening)]
     fn cells_differ(&self) -> bool {
         let prev_cell = self.prev.get(self.pos);
@@ -79,11 +86,22 @@ impl<'prev, 'next> BufferDiff<'prev, 'next> {
 
         match (prev_cell, next_cell) {
             (Some(p), Some(n)) => {
-                let prev_table = self.prev_table.read().unwrap();
-                let next_table = self.next_table.read().unwrap();
-                let prev_unpacked = p.to_cell(&prev_table);
-                let next_unpacked = n.to_cell(&next_table);
-                prev_unpacked != next_unpacked
+                // Fast path: If tables are identical, compare packed cells directly
+                // Arc::ptr_eq checks if both buffers share the same symbol table
+                let tables_same = Arc::ptr_eq(self.prev_table, self.next_table);
+                
+                if tables_same && p == n {
+                    // Same table, same packed cells -> definitely equal
+                    false
+                } else {
+                    // Slow path: must unpack and compare full cells
+                    // Tables differ OR packed cells differ
+                    let prev_table = self.prev_table.read().unwrap();
+                    let next_table = self.next_table.read().unwrap();
+                    let prev_unpacked = p.to_cell(&prev_table);
+                    let next_unpacked = n.to_cell(&next_table);
+                    prev_unpacked != next_unpacked
+                }
             }
             (None, Some(_)) | (Some(_), None) => true,
             (None, None) => false,
