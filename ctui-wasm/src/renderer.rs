@@ -112,4 +112,88 @@ mod tests {
         loop_instance.stop();
         assert!(!loop_instance.is_running());
     }
+
+    #[test]
+    fn test_stop_idempotent() {
+        let mut lp = RenderLoop::new();
+        lp.stop();
+        lp.stop();
+        assert!(!lp.is_running());
+    }
+
+    #[test]
+    fn test_new_default_eq() {
+        let a = RenderLoop::new();
+        let b = RenderLoop::default();
+        assert_eq!(a.is_running(), b.is_running());
+    }
+
+    #[test]
+    fn test_is_running_const() {
+        const LP: RenderLoop = RenderLoop::new();
+        assert!(!LP.is_running());
+    }
+
+    #[test]
+    fn test_stop_sequence() {
+        let mut lp = RenderLoop::new();
+        assert!(!lp.is_running());
+        lp.stop();
+        assert!(!lp.is_running());
+    }
+
+    #[test]
+    fn test_multiple_cycles() {
+        let mut lp = RenderLoop::new();
+        for _ in 0..5 {
+            lp.stop();
+        }
+        assert!(!lp.is_running());
+    }
 }
+
+    #[test]
+    fn test_new_is_const() {
+        const _: RenderLoop = RenderLoop::new();
+    }
+
+    #[test]
+    fn test_default_is_not_running() {
+        assert!(!RenderLoop::default().is_running());
+    }
+
+    #[test]
+    fn test_new_is_not_running() {
+        assert!(!RenderLoop::new().is_running());
+    }
+
+    #[test]
+    fn test_stop_on_default() {
+        let mut lp = RenderLoop::default();
+        lp.stop();
+        assert!(!lp.is_running());
+    }
+
+    #[test]
+    fn test_is_running_returns_false() {
+        let lp = RenderLoop::new();
+        assert_eq!(lp.is_running(), false);
+    }
+
+    #[test]
+    fn test_stop_changes_nothing() {
+        let mut lp = RenderLoop::new();
+        let before = lp.is_running();
+        lp.stop();
+        assert_eq!(lp.is_running(), before);
+    }
+
+    #[test]
+    fn test_truth_table() {
+        let mut lp = RenderLoop::new();
+        assert!(!lp.is_running());
+        lp.stop();
+        assert!(!lp.is_running());
+        lp.stop();
+        assert!(!lp.is_running());
+    }

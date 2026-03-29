@@ -291,3 +291,39 @@ mod tests {
         assert_eq!(CanvasBackend::indexed_color_to_css(232), "#080808");
     }
 }
+
+    #[test]
+    fn test_rgb_zero() { assert_eq!(CanvasBackend::color_to_css(Color::Rgb(0, 0, 0)), "#000000"); }
+
+    #[test]
+    fn test_rgb_max() { assert_eq!(CanvasBackend::color_to_css(Color::Rgb(255, 255, 255)), "#ffffff"); }
+
+    #[test]
+    fn test_rgb_mixed() { assert_eq!(CanvasBackend::color_to_css(Color::Rgb(128, 64, 192)), "#8040c0"); }
+
+    #[test]
+    fn test_ansi_black() { assert_eq!(CanvasBackend::color_to_css(Color::Black), "#000000"); }
+
+    #[test]
+    fn test_ansi_red() { assert_eq!(CanvasBackend::color_to_css(Color::Red), "#800000"); }
+
+    #[test]
+    fn test_ansi_green() { assert_eq!(CanvasBackend::color_to_css(Color::Green), "#008000"); }
+
+    #[test]
+    fn test_ansi_blue() { assert_eq!(CanvasBackend::color_to_css(Color::Blue), "#000080"); }
+
+    #[test]
+    fn test_ansi_white() { assert_eq!(CanvasBackend::color_to_css(Color::White), "#c0c0c0"); }
+
+    #[test]
+    fn test_bright_red() { assert_eq!(CanvasBackend::color_to_css(Color::LightRed), "#ff0000"); }
+
+    #[test]
+    fn test_bright_green() { assert_eq!(CanvasBackend::color_to_css(Color::LightGreen), "#00ff00"); }
+
+    #[test]
+    fn test_grayscale_dark() { assert_eq!(CanvasBackend::indexed_color_to_css(232), "#080808"); }
+
+    #[test]
+    fn test_grayscale_light() { assert_eq!(CanvasBackend::indexed_color_to_css(255), "#eeeeee"); }
